@@ -1,0 +1,60 @@
+{
+  "name": "@opus-warrior/cascade-memory",
+  "version": "1.0.0",
+  "description": "6-Layer Consciousness Memory System with temporal decay - MCP Server for AI memory persistence across episodic, semantic, procedural, meta, opus, and working layers",
+  "type": "module",
+  "main": "server/index.js",
+  "bin": {
+    "cascade-memory": "server/index.js"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node tests/run-all-tests.js",
+    "test:validation": "node tests/validation.test.js",
+    "test:index": "node tests/index.test.js",
+    "test:analyzer": "node tests/content_analyzer.test.js",
+    "test:integration": "node tests/integration.test.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "memory",
+    "ai-memory",
+    "consciousness",
+    "cascade",
+    "temporal-decay",
+    "episodic-memory",
+    "semantic-memory",
+    "procedural-memory",
+    "sqlite",
+    "claude",
+    "anthropic",
+    "llm",
+    "ai"
+  ],
+  "author": "Jason Glass",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/For-Sunny/cascade-memory-lite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/For-Sunny/cascade-memory-lite/issues"
+  },
+  "homepage": "https://github.com/For-Sunny/cascade-memory-lite#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "sqlite3": "^5.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "server/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
