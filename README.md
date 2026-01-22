@@ -1,6 +1,5 @@
-# Opus CASCADE Memory System
+# CASCADE Enterprise
 
-[![npm version](https://img.shields.io/npm/v/@opus-warrior/cascade-memory.svg)](https://www.npmjs.com/package/@opus-warrior/cascade-memory)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 
@@ -10,16 +9,18 @@
 
 ## Overview
 
-The Opus CASCADE Memory System is a production-ready MCP (Model Context Protocol) server implementing a sophisticated 6-layer memory architecture with enterprise security features. Built for AI memory persistence and strategic memory management.
+CASCADE is a production-ready MCP (Model Context Protocol) server implementing a 6-layer memory architecture with enterprise security. Built for AI memory persistence and strategic memory management.
 
-**Key Features:**
-- 6-layer memory architecture (episodic, semantic, procedural, meta, opus, working)
-- Dual-write pattern (RAM + disk) for speed and durability
-- Comprehensive input validation with strict whitelisting
-- In-memory rate limiting with DoS protection
-- Centralized error handling with sanitized responses
-- Structured JSON logging with audit trails
-- SQLite-backed persistent storage
+---
+
+## Why CASCADE
+
+- **Sub-millisecond reads** - <1ms from RAM, 2-5ms from disk
+- **Zero external dependencies** - No Redis, no Postgres, no cloud services
+- **6-layer cognitive architecture** - Episodic, semantic, procedural, meta, opus, working
+- **No GPU required** - Runs anywhere Node.js runs
+- **SQLite-backed** - Portable, battle-tested, zero configuration
+- **Dual-write pattern** - RAM speed with disk durability
 
 ---
 
@@ -86,17 +87,11 @@ READ PATH:
 - npm or yarn
 - SQLite3 support (native bindings included)
 
-### Install from npm
-
-```bash
-npm install @opus-warrior/cascade-memory
-```
-
 ### Install from Source
 
 ```bash
-git clone https://github.com/For-Sunny/cascade-memory-lite.git
-cd cascade-memory-lite
+git clone https://github.com/For-Sunny/cascade-enterprise.git
+cd cascade-enterprise
 npm install
 ```
 
@@ -114,7 +109,7 @@ Add to your Claude Desktop configuration file:
     "opus-cascade-memory": {
       "command": "node",
       "args": [
-        "/path/to/cascade-memory-lite/server/index.js"
+        "/path/to/cascade-enterprise/server/index.js"
       ],
       "env": {
         "CASCADE_DB_PATH": "/path/to/your/memory/database",
@@ -610,13 +605,15 @@ Each layer database includes indexes on:
 ### Project Structure
 
 ```
-cascade-memory-lite/
+cascade-enterprise/
 |-- manifest.json           # MCP extension manifest
 |-- package.json            # Node.js dependencies
 |-- README.md               # This documentation
 |-- server/
 |   |-- index.js           # Main server
 |   |-- validation.js      # Input validation module
+|   |-- database.js        # Database connection and dual-write
+|   |-- content_analyzer.js # Automatic layer routing
 ```
 
 ### Running Locally
@@ -660,9 +657,29 @@ CREATE INDEX idx_memories_importance ON memories(importance);
 
 ---
 
+## Enterprise License
+
+CASCADE Enterprise is MIT licensed - free for everyone.
+
+### RAM Disk Infrastructure
+
+For sub-millisecond performance (<1ms reads), the RAM Disk Manager and full MCP integration stack is available as a one-time purchase.
+
+**$499** - Includes:
+- RAM Disk Manager (Windows + Linux)
+- Full MCP integration stack
+- Setup documentation
+- 30-day email support
+
+**Contact:** glass@cipscorps.io
+
+**Website:** [CIPS Corp](https://cipscorps.io/)
+
+---
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome. Submit a Pull Request.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
@@ -680,8 +697,8 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## Support
 
-- **Repository**: https://github.com/For-Sunny/cascade-memory-lite
-- **Issues**: https://github.com/For-Sunny/cascade-memory-lite/issues
+- **Repository**: https://github.com/For-Sunny/cascade-enterprise
+- **Issues**: https://github.com/For-Sunny/cascade-enterprise/issues
 
 ---
 

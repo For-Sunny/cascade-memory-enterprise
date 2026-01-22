@@ -23,7 +23,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/opus-warrior/cascade-memory"
+    "url": "https://github.com/For-Sunny/cascade-enterprise"
   },
   "server": {
     "type": "node",
@@ -47,7 +47,7 @@
       "title": "CASCADE Database Directory",
       "description": "Path to CASCADE database directory containing Opus's 6-layer memory system",
       "required": true,
-      "default": "${HOME}/Desktop/OPUS_WARRIOR_UNIFIED/MEMORY/CASCADE_DB"
+      "default": "${HOME}/.cascade-memory/data"
     },
     "debug_mode": {
       "type": "boolean",
@@ -94,7 +94,7 @@
       "node": ">=16.0.0"
     }
   },
-  "homepage": "https://opus-warrior.ai",
-  "documentation": "https://opus-warrior.ai/docs/cascade-memory",
-  "support": "https://github.com/opus-warrior/cascade-memory/issues"
+  "homepage": "https://github.com/For-Sunny/cascade-enterprise",
+  "documentation": "https://github.com/For-Sunny/cascade-enterprise#readme",
+  "support": "https://github.com/For-Sunny/cascade-enterprise/issues"
 }

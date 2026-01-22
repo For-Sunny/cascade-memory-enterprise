@@ -4,3 +4,6 @@ data/
 *.db-journal
 *.log
 .DS_Store
+
+# Internal development files (contain local paths)
+SECURITY_AUDIT_REPORT.md

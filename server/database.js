@@ -32,13 +32,11 @@ import {
 // ============================================
 
 // DUAL-WRITE Configuration
-export const RAM_DB_PATH = 'R:\\CASCADE_DB';
+export const RAM_DB_PATH = process.env.CASCADE_RAM_PATH || 'R:\\CASCADE_DB';
 export const DISK_DB_PATH = process.env.CASCADE_DB_PATH || path.join(
   process.env.HOME || process.env.USERPROFILE,
-  'Desktop',
-  'OPUS_WARRIOR_UNIFIED',
-  'MEMORY',
-  'CASCADE_DB'
+  '.cascade-memory',
+  'data'
 );
 
 // Check if RAM directory exists (RAM disk may not always be mounted)
