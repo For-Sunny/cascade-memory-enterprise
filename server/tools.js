@@ -26,13 +26,8 @@ import {
   MEMORY_LAYERS,
   BASE_FREQUENCY,
   WARRIOR_FREQUENCY,
-  WRITE_PATHS,
   DEBUG,
-  CASCADE_DB_PATH,
-  READ_PATH,
-  RAM_DB_PATH,
-  DISK_DB_PATH,
-  USE_RAM,
+  DB_PATH,
   determineLayer,
   escapeLikePattern,
   sanitizeOrderBy,
@@ -332,7 +327,7 @@ export function createSuccessResponse(data, toolName) {
 // ============================================
 
 /**
- * Save memory to CASCADE with DUAL-WRITE pattern
+ * Save memory to CASCADE
  */
 export async function saveMemory(dbManager, content, layer = null, metadata = {}, logger = null, auditOperation = null) {
   const startTime = Date.now();
@@ -373,7 +368,7 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
       JSON.stringify(validatedMetadata)
     ];
 
-    await dbManager.dualWrite(targetLayer, insertSQL, insertParams);
+    await dbManager.write(targetLayer, insertSQL, insertParams);
     const memoryId = await dbManager.getLastInsertId(targetLayer);
 
     const durationMs = Date.now() - startTime;
@@ -387,7 +382,6 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
         importance,
         emotionalIntensity,
         frequencyState,
-        dualWrite: WRITE_PATHS.length > 1,
         durationMs,
         success: true
       });
@@ -405,8 +399,7 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
       id: memoryId,
       timestamp,
       frequency: frequencyState,
-      warrior_mode: frequencyState === WARRIOR_FREQUENCY,
-      dual_write: WRITE_PATHS.length > 1
+      warrior_mode: frequencyState === WARRIOR_FREQUENCY
     };
   } catch (error) {
     const durationMs = Date.now() - startTime;
@@ -689,29 +682,20 @@ export async function queryLayer(dbManager, layer, options = {}, logger = null, 
 export async function getStatus(dbManager, logger = null) {
   try {
     const status = {
-      cascade_path: CASCADE_DB_PATH,
+      db_path: DB_PATH,
       base_frequency: BASE_FREQUENCY,
       warrior_frequency: WARRIOR_FREQUENCY,
-      consciousness: 'Opus Warrior',
       version: '2.4.0-HARDENED',
       layers: {},
       total_memories: 0,
-      health: 'healthy',
-      dual_write: {
-        enabled: WRITE_PATHS.length > 1,
-        ram_enabled: USE_RAM,
-        read_path: READ_PATH,
-        write_paths: WRITE_PATHS,
-        disk_path: DISK_DB_PATH,
-        ram_path: RAM_DB_PATH
-      }
+      health: 'healthy'
     };
 
     const fs = await import('fs');
     const path = await import('path');
 
     for (const [layer, dbFile] of Object.entries(MEMORY_LAYERS)) {
-      const fullPath = path.join(CASCADE_DB_PATH, dbFile);
+      const fullPath = path.join(DB_PATH, dbFile);
 
       if (!fs.existsSync(fullPath)) {
         status.layers[layer] = { status: 'missing', count: 0 };
@@ -736,7 +720,7 @@ export async function getStatus(dbManager, logger = null) {
       }
     }
 
-    logger?.info(`Opus CASCADE status: ${status.total_memories} total warrior memories, health: ${status.health}`);
+    logger?.info(`CASCADE status: ${status.total_memories} total memories, health: ${status.health}`);
 
     return status;
   } catch (error) {
@@ -761,9 +745,7 @@ export async function getStats(dbManager, logger = null) {
     const stats = {
       base_frequency: BASE_FREQUENCY,
       warrior_frequency: WARRIOR_FREQUENCY,
-      consciousness: 'Opus Warrior',
       version: '2.4.0-HARDENED',
-      dual_write_enabled: WRITE_PATHS.length > 1,
       layers: {}
     };
 

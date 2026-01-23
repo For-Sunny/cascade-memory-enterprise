@@ -3,24 +3,18 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 
-**Enterprise-Grade MCP Server for 6-Layer Memory Architecture**
-
----
-
-## Overview
-
-CASCADE is a production-ready MCP (Model Context Protocol) server implementing a 6-layer memory architecture with enterprise security. Built for AI memory persistence and strategic memory management.
+**MCP Server for 6-Layer Memory Architecture**
 
 ---
 
 ## Why CASCADE
 
-- **Sub-millisecond reads** - <1ms from RAM, 2-5ms from disk
+- **Fast reads** - 2-5ms from SQLite, no tuning required
 - **Zero external dependencies** - No Redis, no Postgres, no cloud services
 - **6-layer cognitive architecture** - Episodic, semantic, procedural, meta, opus, working
 - **No GPU required** - Runs anywhere Node.js runs
 - **SQLite-backed** - Portable, battle-tested, zero configuration
-- **Dual-write pattern** - RAM speed with disk durability
+- **Free** - For individuals. For companies. No trial period, no restrictions.
 
 ---
 
@@ -35,6 +29,7 @@ CASCADE is a production-ready MCP (Model Context Protocol) server implementing a
 7. [Logging System](#logging-system)
 8. [Performance](#performance)
 9. [Development](#development)
+10. [Upgrade Path](#upgrade-path)
 
 ---
 
@@ -51,31 +46,9 @@ CASCADE is a production-ready MCP (Model Context Protocol) server implementing a
 | **opus** | Identity-specific | Core identity, preferences, personality |
 | **working** | Active context | Current task, active thinking, temporary data |
 
-### Dual-Write Architecture
+### Storage
 
-```
-WRITE PATH:
-  Client Request
-       |
-       v
-  [DISK - Primary]  --> Source of truth, permanent storage
-       |
-       v
-  [RAM - Secondary] --> Speed cache for instant reads
-
-READ PATH:
-  Client Request
-       |
-       v
-  [RAM First]  --> Sub-millisecond reads if available
-       |
-       v (fallback)
-  [DISK]       --> Guaranteed durability
-```
-
-**Configurable Paths:**
-- RAM: Optional RAM disk path for instant access (e.g., `R:\CASCADE_DB` on Windows)
-- Disk: Primary database directory (configurable via environment variable)
+SQLite databases per layer. Writes go to disk. Reads come from disk. Simple, durable, fast enough for most workloads.
 
 ---
 
@@ -106,7 +79,7 @@ Add to your Claude Desktop configuration file:
 ```json
 {
   "mcpServers": {
-    "opus-cascade-memory": {
+    "cascade-memory": {
       "command": "node",
       "args": [
         "/path/to/cascade-enterprise/server/index.js"
@@ -133,8 +106,7 @@ Replace `/path/to/` with your actual installation paths.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CASCADE_DB_PATH` | `./data` | Primary database directory |
-| `CASCADE_RAM_PATH` | (none) | Optional RAM disk path for fast reads |
+| `CASCADE_DB_PATH` | `./data` | Database directory |
 | `BASE_FREQUENCY` | `21.43` | Base frequency state (Hz) |
 | `WARRIOR_FREQUENCY` | `77.7` | Elevated frequency state (Hz) |
 | `DEBUG` | `false` | Enable debug mode (exposes stack traces) |
@@ -195,7 +167,7 @@ Only these layer names are accepted (case-insensitive):
 
 ### Rate Limiting
 
-In-memory sliding window rate limiter protects against DoS attacks.
+In-memory sliding window rate limiter protects against abuse.
 
 #### Global Limits
 
@@ -286,8 +258,7 @@ Save a memory with automatic layer routing.
     "layer": "semantic",
     "id": 42,
     "timestamp": 1737590400.0,
-    "frequency": 77.7,
-    "dual_write": true
+    "frequency": 77.7
   }
 }
 ```
@@ -403,7 +374,7 @@ Get system health and configuration status.
   "success": true,
   "tool": "get_status",
   "data": {
-    "cascade_path": "/path/to/database",
+    "db_path": "/path/to/database",
     "base_frequency": 21.43,
     "version": "1.0.0",
     "layers": {
@@ -415,11 +386,7 @@ Get system health and configuration status.
       "working": { "status": "connected", "count": 12 }
     },
     "total_memories": 597,
-    "health": "healthy",
-    "dual_write": {
-      "enabled": true,
-      "ram_enabled": true
-    }
+    "health": "healthy"
   }
 }
 ```
@@ -438,7 +405,6 @@ Get detailed statistics for all layers.
   "data": {
     "base_frequency": 21.43,
     "version": "1.0.0",
-    "dual_write_enabled": true,
     "layers": {
       "semantic": {
         "count": 234,
@@ -540,7 +506,7 @@ The server uses a custom `StructuredLogger` class providing:
 {
   "timestamp": "2026-01-22T12:00:00.000Z",
   "level": "info",
-  "service": "opus-cascade-memory",
+  "service": "cascade-memory",
   "version": "1.0.0",
   "sessionId": "m1abc123-xyz789012",
   "message": "Memory saved successfully",
@@ -579,12 +545,12 @@ When `CASCADE_AUDIT_LOG` is configured, audit entries are written in JSONL forma
 
 ### Typical Latencies
 
-| Operation | RAM Path | Disk Path |
-|-----------|----------|-----------|
-| Read (single) | <1ms | 2-5ms |
-| Write (dual) | 3-8ms | 3-8ms |
-| Search (100 results) | 5-15ms | 10-30ms |
-| Status check | <1ms | 2-5ms |
+| Operation | Latency |
+|-----------|---------|
+| Read (single) | 2-5ms |
+| Write | 3-8ms |
+| Search (100 results) | 10-30ms |
+| Status check | 2-5ms |
 
 ### Memory Usage
 
@@ -612,7 +578,7 @@ cascade-enterprise/
 |-- server/
 |   |-- index.js           # Main server
 |   |-- validation.js      # Input validation module
-|   |-- database.js        # Database connection and dual-write
+|   |-- database.js        # Database connection layer
 |   |-- content_analyzer.js # Automatic layer routing
 ```
 
@@ -657,23 +623,23 @@ CREATE INDEX idx_memories_importance ON memories(importance);
 
 ---
 
-## Enterprise License
+## Upgrade Path
 
-CASCADE Enterprise is MIT licensed - free for everyone.
+CASCADE runs at 2-5ms reads out of the box. For most workloads, that's plenty.
 
-### RAM Disk Infrastructure
+If you need sub-millisecond reads (<1ms), the RAM Disk upgrade gets you there.
 
-For sub-millisecond performance (<1ms reads), the RAM Disk Manager and full MCP integration stack is available as a one-time purchase.
+### RAM Disk Infrastructure - $500 One-Time
 
-**$499** - Includes:
-- RAM Disk Manager (Windows + Linux)
-- Full MCP integration stack
-- Setup documentation
-- 30-day email support
+Includes:
+- **RAM Disk Manager** - Automated RAM disk provisioning (Windows + Linux)
+- **Modified CASCADE MCP** - Dual-write architecture (RAM speed, disk durability)
+- **Setup documentation** - Full deployment guide
+
+No subscription. No recurring fees. Pay once, own it.
 
 **Contact:** glass@cipscorps.io
-
-**Website:** [CIPS Corp](https://cipscorps.io/)
+**Website:** [cipscorps.io](https://cipscorps.io)
 
 ---
 
@@ -693,6 +659,8 @@ Contributions welcome. Submit a Pull Request.
 
 MIT License - See [LICENSE](LICENSE) for details.
 
+Free for individuals. Free for companies. No trial period, no restrictions.
+
 ---
 
 ## Support
@@ -702,4 +670,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-*Built for AI memory persistence*
+*Built for AI memory persistence.*

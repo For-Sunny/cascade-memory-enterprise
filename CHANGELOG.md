@@ -5,6 +5,21 @@ All notable changes to opus-cascade-memory will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-01-23
+
+### Changed
+- Simplified to disk-only architecture for public release
+- Removed RAM disk infrastructure (available as paid upgrade)
+- Streamlined database module to single-path writes
+- Updated documentation to reflect disk-only performance
+
+### Kept
+- Full 6-layer memory architecture
+- Enterprise security (input validation, SQL injection prevention, rate limiting)
+- Structured logging with audit trail
+- Error sanitization
+- All MCP tools (remember, recall, query_layer, save_to_layer, get_status, get_stats)
+
 ## [2.4.0-HARDENED] - 2026-01-22
 
 ### Added

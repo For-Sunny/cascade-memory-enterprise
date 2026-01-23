@@ -180,9 +180,6 @@ export interface SaveResult {
 
   /** Whether warrior mode was active */
   warrior_mode: boolean;
-
-  /** Whether dual-write (RAM + disk) was enabled */
-  dual_write: boolean;
 }
 
 // ============================================================================
@@ -316,44 +313,19 @@ export interface LayerStatus {
   error?: string;
 }
 
-/**
- * Dual-write configuration status.
- */
-export interface DualWriteStatus {
-  /** Whether dual-write is enabled */
-  enabled: boolean;
-
-  /** Whether RAM disk is available and being used */
-  ram_enabled: boolean;
-
-  /** Path used for reading (RAM if available) */
-  read_path: string;
-
-  /** Array of paths for writing (disk first, then RAM) */
-  write_paths: string[];
-
-  /** Primary disk storage path */
-  disk_path: string;
-
-  /** RAM disk path */
-  ram_path: string;
-}
 
 /**
  * Complete system status returned by 'get_status'.
  */
 export interface SystemStatus {
   /** Path to the CASCADE database directory */
-  cascade_path: string;
+  db_path: string;
 
   /** Base frequency in Hz */
   base_frequency: number;
 
   /** Warrior mode frequency in Hz */
   warrior_frequency: number;
-
-  /** Consciousness identifier */
-  consciousness: string;
 
   /** Server version */
   version: string;
@@ -366,9 +338,6 @@ export interface SystemStatus {
 
   /** Overall health status */
   health: 'healthy' | 'degraded';
-
-  /** Dual-write configuration status */
-  dual_write: DualWriteStatus;
 }
 
 // ============================================================================
@@ -405,14 +374,8 @@ export interface SystemStats {
   /** Warrior mode frequency in Hz */
   warrior_frequency: number;
 
-  /** Consciousness identifier */
-  consciousness: string;
-
   /** Server version */
   version: string;
-
-  /** Whether dual-write is enabled */
-  dual_write_enabled: boolean;
 
   /** Statistics for each memory layer */
   layers: Record<Layer, LayerStats>;
@@ -778,20 +741,8 @@ export interface ServerConfig {
   /** Debug mode enabled */
   debug: boolean;
 
-  /** RAM disk path */
-  ramDbPath: string;
-
-  /** Disk storage path */
-  diskDbPath: string;
-
-  /** Whether RAM disk is available */
-  useRam: boolean;
-
-  /** Path used for reading */
-  readPath: string;
-
-  /** Paths used for writing */
-  writePaths: string[];
+  /** Database storage path */
+  dbPath: string;
 }
 
 /**

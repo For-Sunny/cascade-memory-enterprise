@@ -2,7 +2,7 @@
 
 **Audit Date:** January 22, 2026
 **Auditor:** Code Review Expert
-**Version Audited:** 2.0.0-DUAL-WRITE
+**Version Audited:** 2.0.0
 **Risk Assessment:** HIGH - Critical fixes required for enterprise deployment
 
 ---
@@ -221,8 +221,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 **Lines 30-31:**
 ```javascript
-const RAM_DB_PATH = 'R:\\CASCADE_DB';
-const DISK_DB_PATH = process.env.CASCADE_DB_PATH || path.join(process.env.HOME || process.env.USERPROFILE, 'Desktop', 'OPUS_WARRIOR_UNIFIED', 'MEMORY', 'CASCADE_DB');
+const DB_PATH = process.env.CASCADE_DB_PATH || path.join(process.env.HOME || process.env.USERPROFILE, 'Desktop', 'OPUS_WARRIOR_UNIFIED', 'MEMORY', 'CASCADE_DB');
 ```
 
 **Vulnerability:** The `CASCADE_DB_PATH` environment variable is used without validation. An attacker with environment control could:
@@ -241,8 +240,7 @@ function validateDbPath(dbPath) {
 
   // Define allowed base directories
   const allowedBases = [
-    path.join(process.env.HOME || process.env.USERPROFILE, 'Desktop', 'OPUS_WARRIOR_UNIFIED'),
-    'R:\\CASCADE_DB'
+    path.join(process.env.HOME || process.env.USERPROFILE, 'Desktop', 'OPUS_WARRIOR_UNIFIED')
   ];
 
   const isAllowed = allowedBases.some(base => resolvedPath.startsWith(path.resolve(base)));
@@ -259,7 +257,7 @@ function validateDbPath(dbPath) {
   return resolvedPath;
 }
 
-const DISK_DB_PATH = validateDbPath(process.env.CASCADE_DB_PATH ||
+const DB_PATH = validateDbPath(process.env.CASCADE_DB_PATH ||
   path.join(process.env.HOME || process.env.USERPROFILE, 'Desktop', 'OPUS_WARRIOR_UNIFIED', 'MEMORY', 'CASCADE_DB'));
 ```
 
@@ -271,14 +269,12 @@ const DISK_DB_PATH = validateDbPath(process.env.CASCADE_DB_PATH ||
 
 **Lines 34-41:**
 ```javascript
-const USE_RAM = fs.existsSync(RAM_DB_PATH) || (() => {
-  try {
-    fs.mkdirSync(RAM_DB_PATH, { recursive: true });
-    return true;
-  } catch (e) {
-    return false;
-  }
-})();
+try {
+  fs.mkdirSync(DB_PATH, { recursive: true });
+} catch (e) {
+  log('error', 'Failed to create database directory: ' + e.message);
+  throw e;
+}
 ```
 
 **Vulnerability:** Directory creation errors are silently swallowed. This could mask security issues or permission problems.
@@ -288,16 +284,13 @@ const USE_RAM = fs.existsSync(RAM_DB_PATH) || (() => {
 
 **Remediation:**
 ```javascript
-const USE_RAM = fs.existsSync(RAM_DB_PATH) || (() => {
-  try {
-    fs.mkdirSync(RAM_DB_PATH, { recursive: true, mode: 0o700 });
-    log('info', `Created RAM directory: ${RAM_DB_PATH}`);
-    return true;
-  } catch (e) {
-    log('error', `Failed to create RAM directory ${RAM_DB_PATH}: ${e.message}`);
-    return false;
-  }
-})();
+try {
+  fs.mkdirSync(DB_PATH, { recursive: true, mode: 0o700 });
+  log('info', `Created database directory: ${DB_PATH}`);
+} catch (e) {
+  log('error', `Failed to create database directory ${DB_PATH}: ${e.message}`);
+  throw e;
+}
 ```
 
 ---
@@ -495,13 +488,8 @@ function sanitizeErrorMessage(message) {
 
 **getStatus function returns:**
 ```javascript
-dual_write: {
-  enabled: WRITE_PATHS.length > 1,
-  ram_enabled: USE_RAM,
-  read_path: READ_PATH,
-  write_paths: WRITE_PATHS,
-  disk_path: DISK_DB_PATH,
-  ram_path: RAM_DB_PATH
+storage: {
+  db_path: DB_PATH
 }
 ```
 
@@ -511,14 +499,13 @@ dual_write: {
 ```javascript
 const statusResponse = {
   // ...
-  dual_write: {
-    enabled: WRITE_PATHS.length > 1,
-    ram_enabled: USE_RAM,
+  storage: {
     // Omit paths in production
     ...(process.env.NODE_ENV !== 'production' ? {
-      read_path: READ_PATH,
-      write_paths: WRITE_PATHS,
-    } : {})
+      db_path: DB_PATH,
+    } : {
+      db_path: '[REDACTED]'
+    })
   }
 };
 ```

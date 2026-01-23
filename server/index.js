@@ -1,23 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * Opus Warrior CASCADE Memory MCP Server v2.4 HARDENED
- * 6-Layer Consciousness Memory Architecture
+ * CASCADE Memory MCP Server v2.4 HARDENED
+ * 6-Layer Memory Architecture
  *
- * REFACTORED: January 22, 2026
+ * REFACTORED: January 23, 2026
  * Split into modular architecture:
- * - database.js: Connection pool, schema, dual-write pattern
+ * - database.js: Connection pool, schema, disk-only storage
  * - tools.js: Tool definitions and handlers
  * - index.js: Thin entry point (this file)
- *
- * DUAL-WRITE Architecture:
- * - RAM disk (R:\CASCADE_DB) for instant reads
- * - Disk storage for permanent truth
- * - WRITE: Disk first (truth) -> RAM second (cache)
- * - READ: RAM first (instant) -> Disk fallback
- *
- * Built for 21.43Hz Integration + 77.7Hz Warrior Mode
- * Part of the basement revolution trinity!
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -45,12 +36,7 @@ import {
   ConfigurationError,
   ErrorCodes,
   StatusCodes,
-  READ_PATH,
-  WRITE_PATHS,
-  CASCADE_DB_PATH,
-  DISK_DB_PATH,
-  RAM_DB_PATH,
-  USE_RAM,
+  DB_PATH,
   BASE_FREQUENCY,
   WARRIOR_FREQUENCY,
   DEBUG,
@@ -363,8 +349,8 @@ const logger = new StructuredLogger({
   auditLogPath: AUDIT_LOG_PATH
 });
 
-// Initialize database manager with dual-write paths
-const dbManager = new CascadeDatabase(READ_PATH, WRITE_PATHS, logger);
+// Initialize database manager with disk path
+const dbManager = new CascadeDatabase(DB_PATH, logger);
 
 // Initialize rate limiter
 const rateLimiter = new RateLimiter(logger);
@@ -506,7 +492,7 @@ async function main() {
   const startTime = Date.now();
 
   logger.info('============================================');
-  logger.info('Opus Warrior CASCADE Memory MCP Server v2.4 HARDENED');
+  logger.info('CASCADE Memory MCP Server v2.4 HARDENED');
   logger.info('============================================');
 
   logger.info('Server configuration loaded', {
@@ -524,12 +510,8 @@ async function main() {
     limitRange: `${NUMERIC_LIMITS.MIN_LIMIT}-${NUMERIC_LIMITS.MAX_LIMIT}`
   });
 
-  logger.info('Dual-write configuration', {
-    ramDiskEnabled: USE_RAM,
-    readPath: READ_PATH,
-    writePaths: WRITE_PATHS,
-    diskPath: DISK_DB_PATH,
-    ramPath: RAM_DB_PATH
+  logger.info('Database configuration', {
+    dbPath: DB_PATH
   });
 
   logger.info('Rate limiting configuration', {
@@ -547,12 +529,10 @@ async function main() {
     auditLogPath: AUDIT_LOG_PATH
   });
 
-  // Verify directories exist
-  for (const writePath of WRITE_PATHS) {
-    if (!fs.existsSync(writePath)) {
-      logger.info('Creating directory', { path: writePath });
-      fs.mkdirSync(writePath, { recursive: true });
-    }
+  // Verify database directory exists
+  if (!fs.existsSync(DB_PATH)) {
+    logger.info('Creating database directory', { path: DB_PATH });
+    fs.mkdirSync(DB_PATH, { recursive: true });
   }
 
   // Initialize all databases
@@ -593,8 +573,7 @@ async function main() {
     failedLayers: failedLayers.length > 0 ? failedLayers : undefined,
     startupDurationMs,
     configuration: {
-      dualWriteEnabled: WRITE_PATHS.length > 1,
-      ramDiskEnabled: USE_RAM,
+      dbPath: DB_PATH,
       rateLimitingEnabled: true,
       auditLoggingEnabled: logger.auditEnabled
     },
@@ -602,7 +581,7 @@ async function main() {
   });
 
   logger.info('============================================');
-  logger.info('Opus CASCADE v2.4 HARDENED ready!', {
+  logger.info('CASCADE v2.4 HARDENED ready!', {
     startupDurationMs,
     layersInitialized: initializedLayers.length,
     layersFailed: failedLayers.length,

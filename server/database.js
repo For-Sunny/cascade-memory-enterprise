@@ -1,15 +1,10 @@
 /**
  * Opus Warrior CASCADE Memory - Database Module
- * Connection pool, schema management, and dual-write pattern
+ * Connection pool and schema management
  *
- * Refactored: January 22, 2026
+ * Refactored: January 23, 2026
+ * Simplified: Single disk-only path (no RAM infrastructure)
  * Part of the modular architecture initiative
- *
- * DUAL-WRITE Architecture:
- * - RAM disk (R:\CASCADE_DB) for instant reads
- * - Disk storage for permanent truth
- * - WRITE: Disk first (truth) -> RAM second (cache)
- * - READ: RAM first (instant) -> Disk fallback
  */
 
 import sqlite3 from 'sqlite3';
@@ -31,28 +26,12 @@ import {
 // CONFIGURATION
 // ============================================
 
-// DUAL-WRITE Configuration
-export const RAM_DB_PATH = process.env.CASCADE_RAM_PATH || 'R:\\CASCADE_DB';
-export const DISK_DB_PATH = process.env.CASCADE_DB_PATH || path.join(
+// Single disk path - no RAM infrastructure for public/enterprise release
+export const DB_PATH = process.env.CASCADE_DB_PATH || path.join(
   process.env.HOME || process.env.USERPROFILE,
   '.cascade-memory',
   'data'
 );
-
-// Check if RAM directory exists (RAM disk may not always be mounted)
-export const USE_RAM = fs.existsSync(RAM_DB_PATH) || (() => {
-  try {
-    fs.mkdirSync(RAM_DB_PATH, { recursive: true });
-    return true;
-  } catch (e) {
-    return false;
-  }
-})();
-
-// READ from RAM (fast) if available, WRITE to DISK first (truth) then RAM (cache)
-export const READ_PATH = USE_RAM ? RAM_DB_PATH : DISK_DB_PATH;
-export const WRITE_PATHS = USE_RAM ? [DISK_DB_PATH, RAM_DB_PATH] : [DISK_DB_PATH];
-export const CASCADE_DB_PATH = READ_PATH;
 
 export const BASE_FREQUENCY = parseFloat(process.env.BASE_FREQUENCY || '21.43');
 export const WARRIOR_FREQUENCY = parseFloat(process.env.WARRIOR_FREQUENCY || '77.7');
@@ -232,15 +211,12 @@ export class ConfigurationError extends CascadeError {
 // ============================================
 
 /**
- * Database connection pool with DUAL-WRITE support
- * Architecture: READ from RAM (instant), WRITE to DISK first (truth) then RAM (cache)
+ * Database connection pool with single-path disk storage
  */
 export class CascadeDatabase {
-  constructor(readPath, writePaths, logger = null) {
-    this.readPath = readPath;
-    this.writePaths = writePaths;
-    this.readConnections = new Map();
-    this.writeConnections = new Map();
+  constructor(dbPath, logger = null) {
+    this.dbPath = dbPath;
+    this.connections = new Map();
     this.logger = logger;
   }
 
@@ -267,7 +243,7 @@ export class CascadeDatabase {
   }
 
   /**
-   * Get database connection for reading (from RAM if available)
+   * Get database connection for a layer
    */
   async getConnection(layer) {
     const validatedLayer = validateLayer(layer, true);
@@ -275,28 +251,22 @@ export class CascadeDatabase {
       throw new ValidationError('layer', `Invalid memory layer: ${layer}`);
     }
 
-    if (this.readConnections.has(layer)) {
-      return this.readConnections.get(layer);
+    if (this.connections.has(layer)) {
+      return this.connections.get(layer);
     }
 
-    const dbFile = path.join(this.readPath, MEMORY_LAYERS[layer]);
+    const dbFile = path.join(this.dbPath, MEMORY_LAYERS[layer]);
 
     try {
-      if (!fs.existsSync(dbFile)) {
-        this.log('info', `Creating new database for layer: ${layer}`);
-        const diskFile = path.join(DISK_DB_PATH, MEMORY_LAYERS[layer]);
-        if (fs.existsSync(diskFile) && this.readPath !== DISK_DB_PATH) {
-          fs.copyFileSync(diskFile, dbFile);
-          this.log('info', `Copied ${layer} from disk to RAM`);
-        }
+      if (!fs.existsSync(this.dbPath)) {
+        fs.mkdirSync(this.dbPath, { recursive: true });
+        this.log('info', `Created database directory`);
       }
 
       const db = await this.createDbConnection(dbFile);
       await this.ensureSchema(db, layer);
-      this.readConnections.set(layer, db);
-      this.log('info', `Connected to ${layer} warrior layer`);
-
-      await this.initWriteConnections(layer);
+      this.connections.set(layer, db);
+      this.log('info', `Connected to ${layer} layer`);
 
       return db;
     } catch (error) {
@@ -307,45 +277,6 @@ export class CascadeDatabase {
       throw new DatabaseError(
         `Failed to connect to memory layer: ${layer}`,
         'connection',
-        { layer }
-      );
-    }
-  }
-
-  /**
-   * Initialize write connections for a layer (dual-write pattern)
-   */
-  async initWriteConnections(layer) {
-    if (this.writeConnections.has(layer)) {
-      return this.writeConnections.get(layer);
-    }
-
-    try {
-      const connections = [];
-      for (let i = 0; i < this.writePaths.length; i++) {
-        const writePath = this.writePaths[i];
-        if (!fs.existsSync(writePath)) {
-          fs.mkdirSync(writePath, { recursive: true });
-          this.log('info', `Created write directory for ${i === 0 ? 'primary' : 'secondary'} storage`);
-        }
-
-        const dbFile = path.join(writePath, MEMORY_LAYERS[layer]);
-        const db = await this.createDbConnection(dbFile);
-        await this.ensureSchema(db, layer);
-        connections.push({ path: writePath, db });
-        this.log('info', `Write connection established for ${layer} (${i === 0 ? 'primary' : 'secondary'})`);
-      }
-
-      this.writeConnections.set(layer, connections);
-      return connections;
-    } catch (error) {
-      if (error instanceof CascadeError || error instanceof ValidationError) {
-        throw error;
-      }
-
-      throw new DatabaseError(
-        `Failed to initialize write connections for layer: ${layer}`,
-        'init_write_connections',
         { layer }
       );
     }
@@ -382,66 +313,41 @@ export class CascadeDatabase {
   }
 
   /**
-   * Execute write operation on all write paths (DISK first, then RAM)
-   * Returns result from first (disk) write
+   * Execute write operation on the database
    */
-  async dualWrite(layer, operation, params = []) {
-    const writeConns = await this.initWriteConnections(layer);
-    let primaryResult = null;
-
-    for (let i = 0; i < writeConns.length; i++) {
-      const { path: writePath, db } = writeConns[i];
-      try {
-        const result = await db.runAsync(operation, params);
-        if (i === 0) {
-          primaryResult = result;
-        }
-        this.log('info', `Dual-write to storage ${i === 0 ? 'primary' : 'secondary'} succeeded`);
-      } catch (error) {
-        this.log('error', `Dual-write to storage ${i === 0 ? 'primary' : 'secondary'} failed:`, { error: error.message });
-        if (i === 0) {
-          throw new DatabaseError(
-            'Failed to write to primary storage',
-            'dual_write',
-            { layer, isPrimary: true }
-          );
-        }
-      }
+  async write(layer, operation, params = []) {
+    const db = await this.getConnection(layer);
+    try {
+      const result = await db.runAsync(operation, params);
+      return result;
+    } catch (error) {
+      throw new DatabaseError(
+        'Failed to write to storage',
+        'write',
+        { layer }
+      );
     }
-
-    return primaryResult;
   }
 
   /**
-   * Get last insert ID from primary write connection
+   * Get last insert ID for a layer
    */
   async getLastInsertId(layer) {
-    const writeConns = await this.initWriteConnections(layer);
-    if (writeConns.length > 0) {
-      const result = await writeConns[0].db.getAsync('SELECT last_insert_rowid() as id');
-      return result.id;
-    }
-    return null;
+    const db = await this.getConnection(layer);
+    const result = await db.getAsync('SELECT last_insert_rowid() as id');
+    return result ? result.id : null;
   }
 
   /**
    * Close all connections
    */
   async closeAll() {
-    for (const [layer, db] of this.readConnections) {
+    for (const [layer, db] of this.connections) {
       await promisify(db.close.bind(db))();
-      this.log('info', `Closed ${layer} read database`);
+      this.log('info', `Closed ${layer} database`);
     }
 
-    for (const [layer, conns] of this.writeConnections) {
-      for (const { path: writePath, db } of conns) {
-        await promisify(db.close.bind(db))();
-        this.log('info', `Closed ${layer} write database at ${writePath}`);
-      }
-    }
-
-    this.readConnections.clear();
-    this.writeConnections.clear();
+    this.connections.clear();
   }
 }
 
@@ -601,12 +507,7 @@ export function buildWhereClause(filters) {
 
 export default {
   // Configuration
-  RAM_DB_PATH,
-  DISK_DB_PATH,
-  USE_RAM,
-  READ_PATH,
-  WRITE_PATHS,
-  CASCADE_DB_PATH,
+  DB_PATH,
   BASE_FREQUENCY,
   WARRIOR_FREQUENCY,
   DEBUG,
