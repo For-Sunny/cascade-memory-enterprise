@@ -1,0 +1,26 @@
+# Test files
+tests/
+
+# Dependencies
+node_modules/
+
+# Version control
+.git/
+
+# Logs
+*.log
+
+# Environment
+.env
+
+# macOS
+.DS_Store
+
+# Coverage reports
+coverage/
+
+# Database files
+*.db
+
+# Documentation
+SECURITY_AUDIT_REPORT.md

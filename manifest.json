@@ -1,0 +1,104 @@
+{
+  "manifest_version": "0.2",
+  "name": "cascade-enterprise-ram",
+  "version": "2.0.0",
+  "display_name": "CASCADE Enterprise with RAM Disk",
+  "description": "6-layer memory architecture with RAM disk acceleration - sub-millisecond reads via dual-write pattern",
+  "long_description": "# CASCADE Enterprise with RAM Disk\n\nA complete 6-layer memory architecture with RAM disk acceleration for sub-millisecond performance:\n\n- **Episodic Memory**: Sessions, conversations, temporal experiences\n- **Semantic Memory**: Knowledge, concepts, definitions\n- **Procedural Memory**: Skills, processes, how-to guides\n- **Meta Memory**: Self-awareness, insights, reflections\n- **Identity Memory**: Core values, preferences, defining characteristics\n- **Working Memory**: Active context, current task data\n\n## Performance\n\n| Mode | Read Latency |\n|------|--------------|\n| Disk Only | 2-5ms |\n| RAM + Disk (dual-write) | <1ms |\n\nDual-write architecture: writes go to both RAM and disk simultaneously. Reads come from RAM. If RAM fails, automatic fallback to disk. Zero data loss guarantee.",
+  "author": {
+    "name": "CIPS Corp",
+    "email": "glass@cipscorps.io"
+  },
+  "license": "Commercial",
+  "keywords": [
+    "memory",
+    "ai-memory",
+    "cascade",
+    "ram-disk",
+    "dual-write",
+    "mcp",
+    "performance",
+    "sqlite"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cipscorp/cascade-enterprise-ram"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "CASCADE_DB_PATH": "${user_config.cascade_db_path}",
+        "RAM_DISK_PATH": "${user_config.ram_disk_path}",
+        "DEBUG": "${user_config.debug_mode}"
+      }
+    }
+  },
+  "user_config": {
+    "cascade_db_path": {
+      "type": "directory",
+      "title": "Database Directory",
+      "description": "Path to CASCADE database directory (disk storage - durable)",
+      "required": true,
+      "default": "${HOME}/.cascade-memory/data"
+    },
+    "ram_disk_path": {
+      "type": "directory",
+      "title": "RAM Disk Path",
+      "description": "Path to RAM disk mount point (for sub-millisecond reads)",
+      "required": false,
+      "default": ""
+    },
+    "debug_mode": {
+      "type": "boolean",
+      "title": "Debug Mode",
+      "description": "Enable detailed logging for troubleshooting",
+      "required": false,
+      "default": false
+    }
+  },
+  "tools": [
+    {
+      "name": "remember",
+      "description": "Save a memory with automatic layer routing based on content analysis"
+    },
+    {
+      "name": "recall",
+      "description": "Search and retrieve memories across layers with semantic matching"
+    },
+    {
+      "name": "query_layer",
+      "description": "Query specific memory layer with structured filters"
+    },
+    {
+      "name": "get_status",
+      "description": "Get system status including memory counts, RAM disk health, and layer connectivity"
+    },
+    {
+      "name": "get_stats",
+      "description": "Get detailed statistics for all memory layers"
+    },
+    {
+      "name": "save_to_layer",
+      "description": "Save directly to a specific layer with full metadata control"
+    }
+  ],
+  "compatibility": {
+    "mcp_client": ">=0.10.0",
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "homepage": "https://cipscorps.io",
+  "support": "glass@cipscorps.io"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "@cipscorp/cascade-enterprise-ram",
+  "version": "2.0.0",
+  "description": "CASCADE Enterprise - 6-Layer Memory Architecture with RAM Disk Acceleration. Sub-millisecond reads via dual-write pattern (RAM speed + disk durability).",
+  "type": "module",
+  "main": "server/index.js",
+  "bin": {
+    "cascade-enterprise": "server/index.js"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node tests/run-all-tests.js",
+    "test:validation": "node tests/validation.test.js",
+    "test:index": "node tests/index.test.js",
+    "test:integration": "node tests/integration.test.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "memory",
+    "ai-memory",
+    "cascade",
+    "ram-disk",
+    "dual-write",
+    "episodic-memory",
+    "semantic-memory",
+    "procedural-memory",
+    "sqlite",
+    "llm",
+    "ai",
+    "performance"
+  ],
+  "author": "CIPS Corp <glass@cipscorps.io>",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipscorp/cascade-enterprise-ram.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cipscorp/cascade-enterprise-ram/issues"
+  },
+  "homepage": "https://cipscorps.io",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "sqlite3": "^5.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "server/",
+    "ram_disk_manager/",
+    "README.md",
+    "QUICKSTART.md",
+    "LICENSE"
+  ],
+  "private": true
+}
