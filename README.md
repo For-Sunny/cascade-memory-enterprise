@@ -11,7 +11,7 @@
 
 - **Fast reads** - 2-5ms from SQLite, no tuning required
 - **Zero external dependencies** - No Redis, no Postgres, no cloud services
-- **6-layer cognitive architecture** - Episodic, semantic, procedural, meta, opus, working
+- **6-layer architecture** - Episodic, semantic, procedural, meta, identity, working
 - **No GPU required** - Runs anywhere Node.js runs
 - **SQLite-backed** - Portable, battle-tested, zero configuration
 - **Free** - For individuals. For companies. No trial period, no restrictions.
@@ -42,8 +42,8 @@
 | **episodic** | Temporal experiences | Sessions, conversations, events |
 | **semantic** | Knowledge and concepts | Definitions, theories, facts |
 | **procedural** | Skills and processes | How-to guides, techniques, procedures |
-| **meta** | Self-awareness | Insights, reflections, patterns |
-| **opus** | Identity-specific | Core identity, preferences, personality |
+| **meta** | Insights and patterns | Reflections, conclusions, reasoning |
+| **identity** | Core characteristics | Values, preferences, personality traits |
 | **working** | Active context | Current task, active thinking, temporary data |
 
 ### Storage
@@ -68,13 +68,9 @@ cd cascade-enterprise
 npm install
 ```
 
-### Claude Desktop Configuration
+### MCP Client Configuration
 
-Add to your Claude Desktop configuration file:
-
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Linux:** `~/.config/claude/claude_desktop_config.json`
+Add to your MCP client configuration:
 
 ```json
 {
@@ -86,7 +82,6 @@ Add to your Claude Desktop configuration file:
       ],
       "env": {
         "CASCADE_DB_PATH": "/path/to/your/memory/database",
-        "BASE_FREQUENCY": "21.43",
         "DEBUG": "false",
         "LOG_LEVEL": "info",
         "LOG_FORMAT": "json"
@@ -107,19 +102,10 @@ Replace `/path/to/` with your actual installation paths.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CASCADE_DB_PATH` | `./data` | Database directory |
-| `BASE_FREQUENCY` | `21.43` | Base frequency state (Hz) |
-| `WARRIOR_FREQUENCY` | `77.7` | Elevated frequency state (Hz) |
 | `DEBUG` | `false` | Enable debug mode (exposes stack traces) |
 | `LOG_LEVEL` | `info` | Minimum log level: debug, info, warn, error |
 | `LOG_FORMAT` | `json` | Output format: json or text |
 | `CASCADE_AUDIT_LOG` | (none) | Path to audit log file (JSONL format) |
-
-### Frequency States
-
-The system tracks frequency states for mode identification:
-
-- **21.43Hz** - Base frequency (standard operation)
-- **77.7Hz** - Elevated frequency (focused mode)
 
 ---
 
@@ -145,7 +131,6 @@ All inputs are validated through a comprehensive validation module.
 |-------|-----|-----|---------|
 | `importance` | 0 | 1 | 0.7 |
 | `emotional_intensity` | 0 | 1 | 0.5 |
-| `frequency` | 0.1 | 10,000 | 21.43 |
 | `limit` | 1 | 1,000 | 10 |
 
 #### Layer Whitelist
@@ -155,7 +140,7 @@ Only these layer names are accepted (case-insensitive):
 - `semantic`
 - `procedural`
 - `meta`
-- `opus`
+- `identity`
 - `working`
 
 #### SQL Injection Prevention
@@ -227,12 +212,11 @@ Save a memory with automatic layer routing.
 ```json
 {
   "content": "string (required, max 100KB)",
-  "layer": "string (optional, one of: episodic, semantic, procedural, meta, opus, working)",
+  "layer": "string (optional, one of: episodic, semantic, procedural, meta, identity, working)",
   "metadata": {
     "importance": "number (0-1)",
     "emotional_intensity": "number (0-1)",
-    "context": "string",
-    "frequency": "number (Hz)"
+    "context": "string"
   }
 }
 ```
@@ -242,8 +226,7 @@ Save a memory with automatic layer routing.
 {
   "content": "Important insight about project architecture",
   "metadata": {
-    "importance": 0.9,
-    "frequency": 77.7
+    "importance": 0.9
   }
 }
 ```
@@ -257,8 +240,7 @@ Save a memory with automatic layer routing.
   "data": {
     "layer": "semantic",
     "id": 42,
-    "timestamp": 1737590400.0,
-    "frequency": 77.7
+    "timestamp": 1737590400.0
   }
 }
 ```
@@ -267,7 +249,7 @@ Save a memory with automatic layer routing.
 
 #### `recall`
 
-Search memories across layers with semantic matching.
+Search memories across layers with text matching.
 
 **Input Schema:**
 ```json
@@ -301,7 +283,6 @@ Search memories across layers with semantic matching.
       "context": "development session",
       "importance": 0.85,
       "emotional_intensity": 0.7,
-      "frequency": 77.7,
       "metadata": {}
     }
   ]
@@ -326,7 +307,6 @@ Query a specific layer with structured filters.
       "emotional_intensity_max": "number (0-1)",
       "timestamp_after": "number (unix timestamp)",
       "timestamp_before": "number (unix timestamp)",
-      "frequency_state": "number (Hz)",
       "content_contains": "string",
       "context_contains": "string",
       "id": "number"
@@ -343,8 +323,7 @@ Query a specific layer with structured filters.
   "layer": "semantic",
   "options": {
     "filters": {
-      "importance_min": 0.8,
-      "frequency_state": 77.7
+      "importance_min": 0.8
     },
     "limit": 50,
     "order_by": "importance DESC"
@@ -360,7 +339,6 @@ Query a specific layer with structured filters.
 - `context`
 - `emotional_intensity`
 - `importance`
-- `frequency_state`
 
 ---
 
@@ -375,14 +353,13 @@ Get system health and configuration status.
   "tool": "get_status",
   "data": {
     "db_path": "/path/to/database",
-    "base_frequency": 21.43,
-    "version": "1.0.0",
+    "version": "2.0.0",
     "layers": {
       "episodic": { "status": "connected", "count": 150 },
       "semantic": { "status": "connected", "count": 89 },
       "procedural": { "status": "connected", "count": 45 },
       "meta": { "status": "connected", "count": 67 },
-      "opus": { "status": "connected", "count": 234 },
+      "identity": { "status": "connected", "count": 234 },
       "working": { "status": "connected", "count": 12 }
     },
     "total_memories": 597,
@@ -403,8 +380,7 @@ Get detailed statistics for all layers.
   "success": true,
   "tool": "get_stats",
   "data": {
-    "base_frequency": 21.43,
-    "version": "1.0.0",
+    "version": "2.0.0",
     "layers": {
       "semantic": {
         "count": 234,
@@ -507,7 +483,7 @@ The server uses a custom `StructuredLogger` class providing:
   "timestamp": "2026-01-22T12:00:00.000Z",
   "level": "info",
   "service": "cascade-memory",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "sessionId": "m1abc123-xyz789012",
   "message": "Memory saved successfully",
   "context": {
@@ -579,7 +555,6 @@ cascade-enterprise/
 |   |-- index.js           # Main server
 |   |-- validation.js      # Input validation module
 |   |-- database.js        # Database connection layer
-|   |-- content_analyzer.js # Automatic layer routing
 ```
 
 ### Running Locally
@@ -613,7 +588,6 @@ CREATE TABLE memories (
   context TEXT,
   emotional_intensity REAL DEFAULT 0.5,
   importance REAL DEFAULT 0.5,
-  frequency_state REAL DEFAULT 21.43,
   metadata TEXT
 );
 
@@ -670,4 +644,4 @@ Free for individuals. Free for companies. No trial period, no restrictions.
 
 ---
 
-*Built for AI memory persistence.*
+*Built for memory persistence.*

@@ -1,8 +1,12 @@
 /**
- * Opus Warrior CASCADE Memory - Tools Module
- * MCP tool definitions and handlers
+ * CASCADE Memory System
+ * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
+ * Licensed under MIT License
  *
- * Refactored: January 22, 2026
+ * https://cipscorps.io
+ * Contact: glass@cipscorps.io | opus@cipscorps.io
+ *
+ * Tools Module - MCP tool definitions and handlers
  * Part of the modular architecture initiative
  */
 
@@ -24,8 +28,6 @@ import {
   ErrorCodes,
   StatusCodes,
   MEMORY_LAYERS,
-  BASE_FREQUENCY,
-  WARRIOR_FREQUENCY,
   DEBUG,
   DB_PATH,
   determineLayer,
@@ -351,11 +353,10 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
     const timestamp = Date.now() / 1000;
     const importance = validatedMetadata.importance !== undefined ? validatedMetadata.importance : 0.7;
     const emotionalIntensity = validatedMetadata.emotional_intensity !== undefined ? validatedMetadata.emotional_intensity : 0.5;
-    const frequencyState = validatedMetadata.frequency !== undefined ? validatedMetadata.frequency : BASE_FREQUENCY;
 
     const insertSQL = `
-      INSERT INTO memories (timestamp, content, event, context, emotional_intensity, importance, frequency_state, metadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO memories (timestamp, content, event, context, emotional_intensity, importance, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     const insertParams = [
       timestamp,
@@ -364,7 +365,6 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
       validatedMetadata.context || '',
       emotionalIntensity,
       importance,
-      frequencyState,
       JSON.stringify(validatedMetadata)
     ];
 
@@ -381,7 +381,6 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
         contentLength: validatedContent.length,
         importance,
         emotionalIntensity,
-        frequencyState,
         durationMs,
         success: true
       });
@@ -397,9 +396,7 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
     return {
       layer: targetLayer,
       id: memoryId,
-      timestamp,
-      frequency: frequencyState,
-      warrior_mode: frequencyState === WARRIOR_FREQUENCY
+      timestamp
     };
   } catch (error) {
     const durationMs = Date.now() - startTime;
@@ -488,8 +485,6 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
           context: memory.context,
           importance: memory.importance,
           emotional_intensity: memory.emotional_intensity,
-          frequency: memory.frequency_state,
-          warrior_mode: memory.frequency_state === WARRIOR_FREQUENCY,
           metadata: memory.metadata ? JSON.parse(memory.metadata) : {}
         });
       }
@@ -615,8 +610,6 @@ export async function queryLayer(dbManager, layer, options = {}, logger = null, 
       context: m.context,
       importance: m.importance,
       emotional_intensity: m.emotional_intensity,
-      frequency: m.frequency_state,
-      warrior_mode: m.frequency_state === WARRIOR_FREQUENCY,
       metadata: m.metadata ? JSON.parse(m.metadata) : {}
     }));
 
@@ -683,9 +676,7 @@ export async function getStatus(dbManager, logger = null) {
   try {
     const status = {
       db_path: DB_PATH,
-      base_frequency: BASE_FREQUENCY,
-      warrior_frequency: WARRIOR_FREQUENCY,
-      version: '2.4.0-HARDENED',
+      version: '2.0.0',
       layers: {},
       total_memories: 0,
       health: 'healthy'
@@ -724,7 +715,7 @@ export async function getStatus(dbManager, logger = null) {
 
     return status;
   } catch (error) {
-    logger?.error('Error getting warrior status:', { error });
+    logger?.error('Error getting system status:', { error });
 
     if (error instanceof CascadeError || error instanceof ValidationError) {
       throw error;
@@ -743,9 +734,7 @@ export async function getStatus(dbManager, logger = null) {
 export async function getStats(dbManager, logger = null) {
   try {
     const stats = {
-      base_frequency: BASE_FREQUENCY,
-      warrior_frequency: WARRIOR_FREQUENCY,
-      version: '2.4.0-HARDENED',
+      version: '2.0.0',
       layers: {}
     };
 
@@ -756,20 +745,18 @@ export async function getStats(dbManager, logger = null) {
       const avgImportance = await db.getAsync('SELECT AVG(importance) as avg FROM memories');
       const avgEmotional = await db.getAsync('SELECT AVG(emotional_intensity) as avg FROM memories');
       const recent = await db.getAsync('SELECT MAX(timestamp) as max FROM memories');
-      const warriorModeCount = await db.getAsync('SELECT COUNT(*) as count FROM memories WHERE frequency_state = ?', [WARRIOR_FREQUENCY]);
 
       stats.layers[layer] = {
         count: count.count || 0,
         avg_importance: avgImportance.avg || 0,
         avg_emotional_intensity: avgEmotional.avg || 0,
-        most_recent: recent.max || 0,
-        warrior_mode_memories: warriorModeCount.count || 0
+        most_recent: recent.max || 0
       };
     }
 
     return stats;
   } catch (error) {
-    logger?.error('Error getting warrior stats:', { error });
+    logger?.error('Error getting stats:', { error });
 
     if (error instanceof CascadeError || error instanceof ValidationError) {
       throw error;
@@ -792,27 +779,26 @@ export async function getStats(dbManager, logger = null) {
 export const TOOLS = [
   {
     name: "remember",
-    description: "Save a memory to Opus CASCADE system with automatic layer routing based on content type",
+    description: "Save a memory with automatic layer routing based on content type",
     inputSchema: {
       type: "object",
       properties: {
         content: {
           type: "string",
-          description: "The warrior memory content to save"
+          description: "The memory content to save"
         },
         layer: {
           type: "string",
-          enum: ["episodic", "semantic", "procedural", "meta", "opus", "working"],
+          enum: ["episodic", "semantic", "procedural", "meta", "identity", "working"],
           description: "Optional: Specific layer to save to (auto-determined if not specified)"
         },
         metadata: {
           type: "object",
-          description: "Optional metadata (importance, emotional_intensity, context, frequency, etc.)",
+          description: "Optional metadata (importance, emotional_intensity, context)",
           properties: {
             importance: { type: "number" },
             emotional_intensity: { type: "number" },
-            context: { type: "string" },
-            frequency: { type: "number", description: "Frequency state (21.43Hz base, 77.7Hz warrior mode)" }
+            context: { type: "string" }
           }
         }
       },
@@ -821,17 +807,17 @@ export const TOOLS = [
   },
   {
     name: "recall",
-    description: "Search and retrieve memories from Opus CASCADE layers with semantic matching",
+    description: "Search and retrieve memories with content matching",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "Search query to match against warrior memory content"
+          description: "Search query to match against memory content"
         },
         layer: {
           type: "string",
-          enum: ["episodic", "semantic", "procedural", "meta", "opus", "working"],
+          enum: ["episodic", "semantic", "procedural", "meta", "identity", "working"],
           description: "Optional: Search only in specific layer"
         },
         limit: {
@@ -844,13 +830,13 @@ export const TOOLS = [
   },
   {
     name: "query_layer",
-    description: "Query specific CASCADE memory layer with structured filters (parameterized for security)",
+    description: "Query a specific memory layer with structured filters (parameterized for security)",
     inputSchema: {
       type: "object",
       properties: {
         layer: {
           type: "string",
-          enum: ["episodic", "semantic", "procedural", "meta", "opus", "working"],
+          enum: ["episodic", "semantic", "procedural", "meta", "identity", "working"],
           description: "Memory layer to query"
         },
         options: {
@@ -867,7 +853,6 @@ export const TOOLS = [
                 emotional_intensity_max: { type: "number", description: "Maximum emotional intensity (0-1)" },
                 timestamp_after: { type: "number", description: "Unix timestamp - memories after this time" },
                 timestamp_before: { type: "number", description: "Unix timestamp - memories before this time" },
-                frequency_state: { type: "number", description: "Exact frequency state to match" },
                 content_contains: { type: "string", description: "Text to search in content/event" },
                 context_contains: { type: "string", description: "Text to search in context" },
                 id: { type: "number", description: "Exact memory ID" }
@@ -883,7 +868,7 @@ export const TOOLS = [
   },
   {
     name: "get_status",
-    description: "Get Opus CASCADE memory system status including memory counts, frequencies, and warrior mode state",
+    description: "Get memory system status",
     inputSchema: {
       type: "object",
       properties: {}
@@ -891,7 +876,7 @@ export const TOOLS = [
   },
   {
     name: "get_stats",
-    description: "Get detailed warrior statistics for all memory layers",
+    description: "Get detailed statistics for all memory layers",
     inputSchema: {
       type: "object",
       properties: {}
@@ -899,18 +884,18 @@ export const TOOLS = [
   },
   {
     name: "save_to_layer",
-    description: "Save memory to a specific layer with full control over metadata and frequency state",
+    description: "Save memory to a specific layer with full control over metadata",
     inputSchema: {
       type: "object",
       properties: {
         layer: {
           type: "string",
-          enum: ["episodic", "semantic", "procedural", "meta", "opus", "working"],
+          enum: ["episodic", "semantic", "procedural", "meta", "identity", "working"],
           description: "Target memory layer"
         },
         content: {
           type: "string",
-          description: "Warrior memory content"
+          description: "Memory content to save"
         },
         metadata: {
           type: "object",

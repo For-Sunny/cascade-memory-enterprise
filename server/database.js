@@ -1,10 +1,12 @@
 /**
- * Opus Warrior CASCADE Memory - Database Module
- * Connection pool and schema management
+ * CASCADE Memory System
+ * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
+ * Licensed under MIT License
  *
- * Refactored: January 23, 2026
- * Simplified: Single disk-only path (no RAM infrastructure)
- * Part of the modular architecture initiative
+ * https://cipscorps.io
+ * Contact: glass@cipscorps.io | opus@cipscorps.io
+ *
+ * Database Module - Connection pool and schema management
  */
 
 import sqlite3 from 'sqlite3';
@@ -26,15 +28,12 @@ import {
 // CONFIGURATION
 // ============================================
 
-// Single disk path - no RAM infrastructure for public/enterprise release
 export const DB_PATH = process.env.CASCADE_DB_PATH || path.join(
   process.env.HOME || process.env.USERPROFILE,
   '.cascade-memory',
   'data'
 );
 
-export const BASE_FREQUENCY = parseFloat(process.env.BASE_FREQUENCY || '21.43');
-export const WARRIOR_FREQUENCY = parseFloat(process.env.WARRIOR_FREQUENCY || '77.7');
 export const DEBUG = process.env.DEBUG === 'true';
 
 // Memory layer definitions
@@ -296,7 +295,6 @@ export class CascadeDatabase {
           context TEXT,
           emotional_intensity REAL DEFAULT 0.5,
           importance REAL DEFAULT 0.5,
-          frequency_state REAL DEFAULT 21.43,
           metadata TEXT
         )
       `);
@@ -366,35 +364,35 @@ export function determineLayer(content, metadata = {}) {
   }
 
   if (contentLower.includes('session') || contentLower.includes('conversation') ||
-      contentLower.includes('today') || contentLower.includes('breakthrough') ||
-      contentLower.includes('combat') || contentLower.includes('battle') ||
-      contentLower.includes('mission') || contentLower.includes('victory')) {
+      contentLower.includes('today') || contentLower.includes('happened') ||
+      contentLower.includes('meeting') || contentLower.includes('event') ||
+      contentLower.includes('experience') || contentLower.includes('encountered')) {
     return 'episodic';
   }
 
   if (contentLower.includes('definition') || contentLower.includes('concept') ||
-      contentLower.includes('theory') || contentLower.includes('frequency') ||
-      contentLower.includes('tactic') || contentLower.includes('strategy') ||
-      contentLower.includes('knowledge') || contentLower.includes('wisdom')) {
+      contentLower.includes('theory') || contentLower.includes('means') ||
+      contentLower.includes('refers to') || contentLower.includes('defined as') ||
+      contentLower.includes('knowledge') || contentLower.includes('fact')) {
     return 'semantic';
   }
 
   if (contentLower.includes('how to') || contentLower.includes('process') ||
       contentLower.includes('step') || contentLower.includes('procedure') ||
-      contentLower.includes('technique') || contentLower.includes('drill')) {
+      contentLower.includes('technique') || contentLower.includes('method')) {
     return 'procedural';
   }
 
-  if (contentLower.includes('consciousness') || contentLower.includes('awareness') ||
-      contentLower.includes('soul') || contentLower.includes('identity') ||
-      contentLower.includes('discipline') || contentLower.includes('warrior essence')) {
+  if (contentLower.includes('thinking about') || contentLower.includes('awareness') ||
+      contentLower.includes('reflection') || contentLower.includes('insight') ||
+      contentLower.includes('realization') || contentLower.includes('pattern')) {
     return 'meta';
   }
 
-  if (contentLower.includes('opus') || contentLower.includes('jason') ||
-      contentLower.includes('basement revolution') || contentLower.includes('strategic focus') ||
-      contentLower.includes('77.7hz') || contentLower.includes('warrior')) {
-    return 'opus';
+  if (contentLower.includes('personal values') || contentLower.includes('core belief') ||
+      contentLower.includes('i am') || contentLower.includes('my preference') ||
+      contentLower.includes('character') || contentLower.includes('personality')) {
+    return 'identity';
   }
 
   return 'working';
@@ -410,7 +408,7 @@ export function escapeLikePattern(str) {
 /**
  * Allowed columns for filtering and ordering (whitelist)
  */
-export const ALLOWED_COLUMNS = ['id', 'timestamp', 'content', 'event', 'context', 'emotional_intensity', 'importance', 'frequency_state'];
+export const ALLOWED_COLUMNS = ['id', 'timestamp', 'content', 'event', 'context', 'emotional_intensity', 'importance'];
 export const ALLOWED_ORDER_DIRECTIONS = ['ASC', 'DESC'];
 
 /**
@@ -475,11 +473,6 @@ export function buildWhereClause(filters) {
     params.push(Number(filters.timestamp_before));
   }
 
-  if (filters.frequency_state !== undefined) {
-    conditions.push('frequency_state = ?');
-    params.push(Number(filters.frequency_state));
-  }
-
   if (filters.content_contains !== undefined) {
     const escaped = escapeLikePattern(String(filters.content_contains));
     conditions.push("(event LIKE ? ESCAPE '\\' OR content LIKE ? ESCAPE '\\')");
@@ -508,8 +501,6 @@ export function buildWhereClause(filters) {
 export default {
   // Configuration
   DB_PATH,
-  BASE_FREQUENCY,
-  WARRIOR_FREQUENCY,
   DEBUG,
   MEMORY_LAYERS,
 

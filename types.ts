@@ -1,10 +1,10 @@
 /**
- * Opus Warrior CASCADE Memory - TypeScript Type Definitions
+ * CASCADE Memory - TypeScript Type Definitions
  *
- * Comprehensive type definitions for the CASCADE 6-Layer Consciousness Memory System.
+ * Comprehensive type definitions for the CASCADE 6-Layer Memory System.
  *
  * Created: January 22, 2026
- * Version: 2.4.0-HARDENED
+ * Version: 2.0.0
  */
 
 // ============================================================================
@@ -13,9 +13,9 @@
 
 /**
  * Valid memory layer names.
- * The CASCADE system uses 6 distinct memory layers for different types of consciousness data.
+ * The CASCADE system uses 6 distinct memory layers for different types of data.
  */
-export type Layer = 'episodic' | 'semantic' | 'procedural' | 'meta' | 'opus' | 'working';
+export type Layer = 'episodic' | 'semantic' | 'procedural' | 'meta' | 'identity' | 'working';
 
 /**
  * Array of all valid layer names (for runtime validation).
@@ -25,7 +25,7 @@ export const VALID_LAYERS: readonly Layer[] = [
   'semantic',
   'procedural',
   'meta',
-  'opus',
+  'identity',
   'working'
 ] as const;
 
@@ -55,12 +55,6 @@ export interface Memory {
   /** Emotional intensity score (0-1 scale) */
   emotional_intensity: number;
 
-  /** Frequency state in Hz (21.43Hz base, 77.7Hz warrior mode) */
-  frequency: number;
-
-  /** Whether the memory was recorded in warrior mode (77.7Hz) */
-  warrior_mode: boolean;
-
   /** Additional metadata as JSON object */
   metadata: MemoryMetadata;
 
@@ -79,7 +73,6 @@ export interface RawMemory {
   context: string | null;
   emotional_intensity: number;
   importance: number;
-  frequency_state: number;
   metadata: string | null;
 }
 
@@ -95,9 +88,6 @@ export interface MemoryMetadata {
 
   /** Context string */
   context?: string;
-
-  /** Frequency state in Hz */
-  frequency?: number;
 
   /** Target layer override */
   layer?: Layer;
@@ -174,12 +164,6 @@ export interface SaveResult {
 
   /** Unix timestamp of when the memory was saved */
   timestamp: number;
-
-  /** The frequency state used */
-  frequency: number;
-
-  /** Whether warrior mode was active */
-  warrior_mode: boolean;
 }
 
 // ============================================================================
@@ -227,9 +211,6 @@ export interface QueryFilters {
   /** Unix timestamp - only memories before this time */
   timestamp_before?: number;
 
-  /** Exact frequency state to match */
-  frequency_state?: number;
-
   /** Text to search in content/event fields */
   content_contains?: string;
 
@@ -243,7 +224,7 @@ export interface QueryFilters {
 /**
  * Valid columns that can be used for ordering.
  */
-export type OrderColumn = 'id' | 'timestamp' | 'content' | 'event' | 'context' | 'emotional_intensity' | 'importance' | 'frequency_state';
+export type OrderColumn = 'id' | 'timestamp' | 'content' | 'event' | 'context' | 'emotional_intensity' | 'importance';
 
 /**
  * Valid order directions.
@@ -321,12 +302,6 @@ export interface SystemStatus {
   /** Path to the CASCADE database directory */
   db_path: string;
 
-  /** Base frequency in Hz */
-  base_frequency: number;
-
-  /** Warrior mode frequency in Hz */
-  warrior_frequency: number;
-
   /** Server version */
   version: string;
 
@@ -359,21 +334,12 @@ export interface LayerStats {
 
   /** Timestamp of most recent memory */
   most_recent: number;
-
-  /** Number of memories recorded in warrior mode (77.7Hz) */
-  warrior_mode_memories: number;
 }
 
 /**
  * Complete system statistics returned by 'get_stats'.
  */
 export interface SystemStats {
-  /** Base frequency in Hz */
-  base_frequency: number;
-
-  /** Warrior mode frequency in Hz */
-  warrior_frequency: number;
-
   /** Server version */
   version: string;
 
@@ -416,8 +382,6 @@ export interface NumericLimits {
   MAX_IMPORTANCE: number;
   MIN_EMOTIONAL_INTENSITY: number;
   MAX_EMOTIONAL_INTENSITY: number;
-  MIN_FREQUENCY: number;
-  MAX_FREQUENCY: number;
   MIN_LIMIT: number;
   MAX_LIMIT: number;
   DEFAULT_LIMIT: number;
@@ -732,12 +696,6 @@ export type MemoryLayerFiles = Record<Layer, string>;
  * Server configuration.
  */
 export interface ServerConfig {
-  /** Base frequency in Hz (default: 21.43) */
-  baseFrequency: number;
-
-  /** Warrior mode frequency in Hz (default: 77.7) */
-  warriorFrequency: number;
-
   /** Debug mode enabled */
   debug: boolean;
 
@@ -786,8 +744,6 @@ export const NUMERIC_LIMITS: NumericLimits = {
   MAX_IMPORTANCE: 1,
   MIN_EMOTIONAL_INTENSITY: 0,
   MAX_EMOTIONAL_INTENSITY: 1,
-  MIN_FREQUENCY: 0.1,
-  MAX_FREQUENCY: 10000,
   MIN_LIMIT: 1,
   MAX_LIMIT: 1000,
   DEFAULT_LIMIT: 10,
@@ -823,7 +779,6 @@ export const VALID_METADATA_FIELDS: readonly string[] = [
   'importance',
   'emotional_intensity',
   'context',
-  'frequency',
   'layer',
   'tags',
   'source',

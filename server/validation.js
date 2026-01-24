@@ -1,9 +1,12 @@
 /**
- * Opus Warrior CASCADE Memory - Input Validation Module
- * Comprehensive validation for all MCP inputs
+ * CASCADE Memory System
+ * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
+ * Licensed under MIT License
  *
- * Created: January 22, 2026
- * Part of the infrastructure security hardening initiative
+ * https://cipscorps.io
+ * Contact: glass@cipscorps.io | opus@cipscorps.io
+ *
+ * Validation Module - Comprehensive validation for all MCP inputs
  */
 
 // ============================================================================
@@ -32,10 +35,6 @@ export const NUMERIC_LIMITS = {
   MIN_EMOTIONAL_INTENSITY: 0,
   MAX_EMOTIONAL_INTENSITY: 1,
 
-  // Frequency ranges (Hz)
-  MIN_FREQUENCY: 0.1,
-  MAX_FREQUENCY: 10000,
-
   // Query limits
   MIN_LIMIT: 1,
   MAX_LIMIT: 1000,
@@ -58,7 +57,7 @@ export const VALID_LAYERS = Object.freeze([
   'semantic',
   'procedural',
   'meta',
-  'opus',
+  'identity',
   'working'
 ]);
 
@@ -69,7 +68,6 @@ export const VALID_METADATA_FIELDS = Object.freeze([
   'importance',
   'emotional_intensity',
   'context',
-  'frequency',
   'layer',
   'tags',
   'source',
@@ -343,19 +341,6 @@ export function validateEmotionalIntensity(value) {
 }
 
 /**
- * Validate frequency field (Hz)
- */
-export function validateFrequency(value, defaultFrequency = 21.43) {
-  return validateNumericRange(
-    value,
-    'frequency',
-    NUMERIC_LIMITS.MIN_FREQUENCY,
-    NUMERIC_LIMITS.MAX_FREQUENCY,
-    defaultFrequency
-  );
-}
-
-/**
  * Validate limit field (query results limit)
  */
 export function validateLimit(value) {
@@ -453,10 +438,6 @@ export function validateMetadata(metadata) {
 
       case 'emotional_intensity':
         sanitized.emotional_intensity = validateEmotionalIntensity(value);
-        break;
-
-      case 'frequency':
-        sanitized.frequency = validateFrequency(value);
         break;
 
       case 'context':
@@ -691,11 +672,6 @@ export function validateFilters(filters) {
     validated.timestamp_before = validateTimestamp(filters.timestamp_before, 'filters.timestamp_before');
   }
 
-  // Frequency state filter
-  if ('frequency_state' in filters) {
-    validated.frequency_state = validateFrequency(filters.frequency_state);
-  }
-
   // Content search filters
   if ('content_contains' in filters) {
     validated.content_contains = validateStringField(filters.content_contains, 'filters.content_contains');
@@ -905,7 +881,6 @@ export default {
   validateNumericRange,
   validateImportance,
   validateEmotionalIntensity,
-  validateFrequency,
   validateLimit,
   validateTimestamp,
   validateId,

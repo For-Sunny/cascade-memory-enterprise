@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * CASCADE Memory MCP Server v2.4 HARDENED
- * 6-Layer Memory Architecture
+ * CASCADE Memory System
+ * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
+ * Licensed under MIT License
  *
- * REFACTORED: January 23, 2026
- * Split into modular architecture:
- * - database.js: Connection pool, schema, disk-only storage
+ * https://cipscorps.io
+ * Contact: glass@cipscorps.io | opus@cipscorps.io
+ *
+ * MCP Server - 6-Layer Memory Architecture
+ *
+ * Modular architecture:
+ * - database.js: Connection pool, schema, storage
  * - tools.js: Tool definitions and handlers
- * - index.js: Thin entry point (this file)
+ * - index.js: Entry point (this file)
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -37,8 +42,6 @@ import {
   ErrorCodes,
   StatusCodes,
   DB_PATH,
-  BASE_FREQUENCY,
-  WARRIOR_FREQUENCY,
   DEBUG,
   MEMORY_LAYERS,
   sanitizeErrorMessage,
@@ -99,8 +102,8 @@ const AuditOperation = Object.freeze({
 class StructuredLogger extends EventEmitter {
   constructor(options = {}) {
     super();
-    this.serviceName = options.serviceName || 'opus-cascade-memory';
-    this.version = options.version || '2.4.0-HARDENED';
+    this.serviceName = options.serviceName || 'cascade-memory';
+    this.version = options.version || '2.0.0';
     this.minLevel = this._parseLevel(options.minLevel || (process.env.LOG_LEVEL || 'info'));
     this.jsonOutput = options.jsonOutput !== false;
     this.colorOutput = options.colorOutput !== false && process.stderr.isTTY;
@@ -341,8 +344,8 @@ const LOG_LEVEL = process.env.LOG_LEVEL || (process.env.DEBUG === 'true' ? 'debu
 const AUDIT_LOG_PATH = process.env.CASCADE_AUDIT_LOG || null;
 
 const logger = new StructuredLogger({
-  serviceName: 'opus-cascade-memory',
-  version: '2.4.0-HARDENED',
+  serviceName: 'cascade-memory',
+  version: '2.0.0',
   minLevel: LOG_LEVEL,
   jsonOutput: process.env.LOG_FORMAT !== 'text',
   auditEnabled: true,
@@ -364,8 +367,8 @@ const rateLimiter = new RateLimiter(logger);
  */
 const server = new Server(
   {
-    name: "opus-cascade-memory",
-    version: "2.4.0-HARDENED",
+    name: "cascade-memory",
+    version: "2.0.0",
   },
   {
     capabilities: {
@@ -492,12 +495,10 @@ async function main() {
   const startTime = Date.now();
 
   logger.info('============================================');
-  logger.info('CASCADE Memory MCP Server v2.4 HARDENED');
+  logger.info('CASCADE Memory MCP Server v2.0.0');
   logger.info('============================================');
 
   logger.info('Server configuration loaded', {
-    baseFrequency: BASE_FREQUENCY,
-    warriorFrequency: WARRIOR_FREQUENCY,
     debugMode: DEBUG,
     logLevel: LOG_LEVEL,
     auditLogPath: AUDIT_LOG_PATH
@@ -581,16 +582,16 @@ async function main() {
   });
 
   logger.info('============================================');
-  logger.info('CASCADE v2.4 HARDENED ready!', {
+  logger.info('CASCADE Memory v2.0.0 ready!', {
     startupDurationMs,
     layersInitialized: initializedLayers.length,
     layersFailed: failedLayers.length,
     sessionId: logger.sessionId
   });
-  logger.info('DoS protection ENGAGED!');
-  logger.info('Centralized error handling ACTIVE!');
-  logger.info('Structured logging ACTIVE!');
-  logger.info('Audit trail ENABLED!');
+  logger.info('Rate limiting enabled');
+  logger.info('Error handling initialized');
+  logger.info('Structured logging active');
+  logger.info('Audit trail enabled');
   logger.info('============================================');
 }
 

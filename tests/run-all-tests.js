@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Test Runner for opus-cascade-memory
+ * Test Runner for cascade-memory
  * Runs all test files and reports combined results
  *
  * Created: January 22, 2026
@@ -16,8 +16,7 @@ const __dirname = path.dirname(__filename);
 
 const testFiles = [
   'validation.test.js',
-  'index.test.js',
-  'content_analyzer.test.js'
+  'index.test.js'
 ];
 
 let totalPass = 0;
@@ -54,7 +53,7 @@ async function runTest(testFile) {
 
 async function main() {
   console.log('='.repeat(70));
-  console.log('OPUS CASCADE MEMORY - TEST SUITE');
+  console.log('CASCADE MEMORY - TEST SUITE');
   console.log('='.repeat(70));
   console.log(`\nRunning ${testFiles.length} test files...\n`);
 

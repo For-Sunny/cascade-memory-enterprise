@@ -1,6 +1,6 @@
 /**
  * Unit Tests for index.js (Main Server Functions)
- * Opus Warrior CASCADE Memory - Server Module Tests
+ * CASCADE Memory - Server Module Tests
  *
  * Created: January 22, 2026
  * Tests exported utilities and helper functions from the main server
@@ -137,7 +137,7 @@ testGroup('CascadeError Class', () => {
   });
 
   test('CascadeError toSafeJSON returns structured response', () => {
-    const error = new CascadeError('Test error', ErrorCodes.DATABASE_ERROR, 500, { layer: 'opus' });
+    const error = new CascadeError('Test error', ErrorCodes.DATABASE_ERROR, 500, { layer: 'identity' });
     const json = error.toSafeJSON();
 
     assert.strictEqual(json.success, false);
@@ -209,9 +209,9 @@ testGroup('sanitizeErrorMessage Function', () => {
   });
 
   test('sanitizeErrorMessage redacts Windows paths', () => {
-    const result = sanitizeErrorMessage('Error in C:\\Users\\Pirate\\Desktop\\file.js');
+    const result = sanitizeErrorMessage('Error in C:\\Users\\Someone\\Desktop\\file.js');
     assert(result.includes('[REDACTED]'));
-    assert(!result.includes('Pirate'));
+    assert(!result.includes('Someone'));
   });
 
   test('sanitizeErrorMessage redacts Unix home paths', () => {
@@ -474,11 +474,11 @@ testGroup('Global Logger Instance', () => {
   });
 
   test('logger has expected service name', () => {
-    assert.strictEqual(logger.serviceName, 'opus-cascade-memory');
+    assert.strictEqual(logger.serviceName, 'cascade-memory');
   });
 
   test('logger has expected version', () => {
-    assert(logger.version.includes('HARDENED'));
+    assert.strictEqual(logger.version, '2.0.0');
   });
 
   test('logger has logging methods', () => {

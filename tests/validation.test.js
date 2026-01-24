@@ -1,6 +1,6 @@
 /**
  * Unit Tests for validation.js
- * Opus Warrior CASCADE Memory - Validation Module Tests
+ * CASCADE Memory - Validation Module Tests
  *
  * Created: January 22, 2026
  * Tests all validation functions for proper input sanitization
@@ -36,7 +36,6 @@ import {
   validateNumericRange,
   validateImportance,
   validateEmotionalIntensity,
-  validateFrequency,
   validateLimit,
   validateTimestamp,
   validateId,
@@ -340,21 +339,6 @@ testGroup('Numeric Validators', () => {
 
   test('validateEmotionalIntensity returns default for null', () => {
     assert.strictEqual(validateEmotionalIntensity(null), 0.5); // Default
-  });
-
-  // validateFrequency tests
-  test('validateFrequency accepts valid Hz values', () => {
-    assert.strictEqual(validateFrequency(21.43), 21.43);
-    assert.strictEqual(validateFrequency(77.7), 77.7);
-  });
-
-  test('validateFrequency returns custom default', () => {
-    assert.strictEqual(validateFrequency(null, 100), 100);
-  });
-
-  test('validateFrequency throws for out of range', () => {
-    assert.throws(() => validateFrequency(0), ValidationError);
-    assert.throws(() => validateFrequency(10001), ValidationError);
   });
 
   // validateLimit tests
@@ -694,10 +678,10 @@ testGroup('Complete Input Validators', () => {
   // validateQueryLayerInput tests
   test('validateQueryLayerInput validates complete input', () => {
     const result = validateQueryLayerInput({
-      layer: 'opus',
+      layer: 'identity',
       options: { limit: 30 }
     });
-    assert.strictEqual(result.layer, 'opus');
+    assert.strictEqual(result.layer, 'identity');
     assert.strictEqual(result.options.limit, 30);
   });
 
@@ -763,7 +747,7 @@ testGroup('Constants', () => {
     assert(VALID_LAYERS.includes('semantic'));
     assert(VALID_LAYERS.includes('procedural'));
     assert(VALID_LAYERS.includes('meta'));
-    assert(VALID_LAYERS.includes('opus'));
+    assert(VALID_LAYERS.includes('identity'));
     assert(VALID_LAYERS.includes('working'));
     assert.strictEqual(VALID_LAYERS.length, 6);
   });

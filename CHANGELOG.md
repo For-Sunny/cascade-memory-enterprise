@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to opus-cascade-memory will be documented in this file.
+All notable changes to cascade-memory will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Simplified to disk-only architecture for public release
-- Removed RAM disk infrastructure (available as paid upgrade)
 - Streamlined database module to single-path writes
 - Updated documentation to reflect disk-only performance
 
@@ -20,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error sanitization
 - All MCP tools (remember, recall, query_layer, save_to_layer, get_status, get_stats)
 
-## [2.4.0-HARDENED] - 2026-01-22
+## [1.4.0] - 2026-01-22
 
 ### Added
 - Comprehensive security hardening across all endpoints
@@ -41,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Memory exhaustion protection via content size limits
 - Rate limiting prevents abuse
 
-## [2.3.0] - 2026-01-20
+## [1.3.0] - 2026-01-20
 
 ### Added
 - Comprehensive error handling across all MCP tools
@@ -57,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unhandled exceptions no longer crash the server
 - Partial failures in batch operations properly reported
 
-## [2.2.0] - 2026-01-18
+## [1.2.0] - 2026-01-18
 
 ### Added
 - Rate limiting per client connection
@@ -68,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - High-frequency callers throttled gracefully
 - Burst allowance for legitimate use patterns
 
-## [2.1.0] - 2026-01-15
+## [1.1.0] - 2026-01-15
 
 ### Added
 - Input validation for all MCP tool parameters
@@ -84,27 +83,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty content strings no longer accepted
 - Invalid layer names caught at input
 
-## [2.0.0] - 2026-01-10
-
-### Added
-- Dual-write pattern: CASCADE + Faiss GPU synchronization
-- Automatic backup on write operations
-- Write verification with rollback on failure
-
-### Changed
-- **BREAKING**: `remember` now writes to both CASCADE and Faiss
-- Memory operations return confirmation from both backends
-- Increased reliability through redundancy
-
-### Migration
-- Existing memories automatically available (no migration needed)
-- New writes propagate to both systems
-
 ## [1.0.0] - 2025-12-01
 
 ### Added
-- Initial release of opus-cascade-memory MCP server
-- 6-layer memory architecture (episodic, semantic, procedural, meta, opus, working)
+- Initial release of cascade-memory MCP server
+- 6-layer memory architecture (episodic, semantic, procedural, meta, identity, working)
 - SQLite backend with sub-millisecond access
 - `remember` tool for saving memories with automatic layer routing
 - `recall` tool for semantic memory search
@@ -113,7 +96,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_stats` tool for memory statistics
 - `save_to_layer` tool for explicit layer targeting
 - Temporal decay with importance scoring
-- Frequency-based memory tagging (21.43Hz base, 77.7Hz warrior mode)
 
 ### Technical
 - MCP protocol compliance

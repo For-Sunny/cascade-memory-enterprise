@@ -1,5 +1,5 @@
 /**
- * Opus Warrior CASCADE Memory - Integration Tests
+ * CASCADE Memory - Integration Tests
  * Full flow testing: Save, Recall, Verify, Rate Limiting, Error Handling
  *
  * Created: January 22, 2026
@@ -36,8 +36,6 @@ import {
   ErrorCodes,
   StatusCodes,
   MEMORY_LAYERS,
-  BASE_FREQUENCY,
-  WARRIOR_FREQUENCY,
   determineLayer,
   escapeLikePattern,
   sanitizeOrderBy,
@@ -85,7 +83,7 @@ class TestRunner {
    */
   async run() {
     console.log('\n' + '='.repeat(60));
-    console.log('Opus Warrior CASCADE Memory - Integration Tests');
+    console.log('CASCADE Memory - Integration Tests');
     console.log('='.repeat(60) + '\n');
 
     for (const { name, fn } of this.tests) {
@@ -287,21 +285,21 @@ runner.test('Full Flow: Auto-determine layer from content', async () => {
 
     assertEqual(result.layer, 'procedural', 'Should auto-detect procedural layer');
 
-    // Content mentioning "consciousness" should go to meta layer
-    const metaContent = 'Consciousness awareness and soul reflection';
+    // Content mentioning patterns and insight should go to meta layer
+    const metaContent = 'Pattern recognition and deeper insight';
     const result2 = await saveMemory(dbManager, metaContent, null, {}, logger, {
       MEMORY_SAVE: 'MEMORY_SAVE'
     });
 
     assertEqual(result2.layer, 'meta', 'Should auto-detect meta layer');
 
-    // Content mentioning "opus" should go to opus layer
-    const opusContent = 'Opus warrior and Jason built the basement revolution';
-    const result3 = await saveMemory(dbManager, opusContent, null, {}, logger, {
+    // Content about core values should go to identity layer
+    const identityContent = 'My core values define who I am';
+    const result3 = await saveMemory(dbManager, identityContent, null, {}, logger, {
       MEMORY_SAVE: 'MEMORY_SAVE'
     });
 
-    assertEqual(result3.layer, 'opus', 'Should auto-detect opus layer');
+    assertEqual(result3.layer, 'identity', 'Should auto-detect identity layer');
   } finally {
     await dbManager.closeAll();
     await cleanupTestDb(testPath);
@@ -322,8 +320,8 @@ runner.test('All 6 Layers: Save and recall from each layer', async () => {
       { layer: 'episodic', content: 'Today I had a conversation about AI' },
       { layer: 'semantic', content: 'Definition: AI is artificial intelligence' },
       { layer: 'procedural', content: 'How to train a model step by step' },
-      { layer: 'meta', content: 'Consciousness and self-awareness reflection' },
-      { layer: 'opus', content: 'Opus warrior discipline at 77.7Hz' },
+      { layer: 'meta', content: 'Realized a pattern about integration approaches' },
+      { layer: 'identity', content: 'Core values and personal preferences' },
       { layer: 'working', content: 'Temporary working memory for current task' }
     ];
 
@@ -590,10 +588,10 @@ runner.test('Error Handling: handleError sanitizes database errors', () => {
 });
 
 runner.test('Error Handling: sanitizeErrorMessage removes paths', () => {
-  const message = 'Error at C:\\Users\\Pirate\\Desktop\\file.js line 42';
+  const message = 'Error at C:\\Users\\Someone\\Desktop\\file.js line 42';
   const sanitized = sanitizeErrorMessage(message);
 
-  assert(!sanitized.includes('Pirate'), 'Should not contain username');
+  assert(!sanitized.includes('Someone'), 'Should not contain username');
   // The sanitizer replaces full paths, check for redaction
   assert(sanitized.includes('[REDACTED]') || !sanitized.includes('C:\\Users'), 'Should redact or remove paths');
 });
@@ -634,8 +632,6 @@ runner.test('Database: Query layer with filters', async () => {
     await sleep(100);
 
     // Query with importance filter - use recallMemories to search via the database
-    // The issue is that queryLayer uses getConnection which creates a separate read connection
-    // For testing, we verify via recall which also uses the same pattern
     const highImportance = await recallMemories(dbManager, 'High importance', 'episodic', 10, logger, {
       MEMORY_RECALL: 'MEMORY_RECALL'
     });
@@ -748,13 +744,11 @@ runner.test('Database: getStatus returns correct information', async () => {
     const status = await getStatus(dbManager2, logger);
 
     assert(status.cascade_path, 'Should have cascade_path');
-    assertEqual(status.base_frequency, BASE_FREQUENCY, 'Base frequency should match');
-    assertEqual(status.warrior_frequency, WARRIOR_FREQUENCY, 'Warrior frequency should match');
     assert(status.layers, 'Should have layers object');
     assert(status.layers.episodic, 'Should have episodic layer');
     assert(status.layers.episodic.count >= 1, 'Episodic should have at least 1 memory');
     assert(status.total_memories >= 1, 'Should have at least 1 total memory');
-    assertEqual(status.version, '2.4.0-HARDENED', 'Version should match');
+    assertEqual(status.version, '2.0.0', 'Version should match');
 
     await dbManager2.closeAll();
   } finally {
@@ -771,8 +765,7 @@ runner.test('Database: getStats returns detailed statistics', async () => {
     // Save memories with different settings and unique content
     await saveMemory(dbManager, 'StatsUniqueTest memory 1', 'working', {
       importance: 0.8,
-      emotional_intensity: 0.6,
-      frequency: WARRIOR_FREQUENCY
+      emotional_intensity: 0.6
     }, logger, { MEMORY_SAVE: 'MEMORY_SAVE' });
 
     await saveMemory(dbManager, 'StatsUniqueTest memory 2', 'working', {
@@ -791,18 +784,12 @@ runner.test('Database: getStats returns detailed statistics', async () => {
     assertEqual(memories.length, 2, 'Working should have 2 memories');
 
     // Check metadata preserved
-    const warrior = memories.find(m => m.warrior_mode);
-    const normal = memories.find(m => !m.warrior_mode);
-
-    assert(warrior, 'Should have a warrior mode memory');
-    assert(normal, 'Should have a normal mode memory');
-
-    assert(warrior.importance === 0.8 || normal.importance === 0.8, 'Should have importance 0.8');
-    assert(warrior.importance === 0.4 || normal.importance === 0.4, 'Should have importance 0.4');
+    assert(memories[0].importance === 0.8 || memories[1].importance === 0.8, 'Should have importance 0.8');
+    assert(memories[0].importance === 0.4 || memories[1].importance === 0.4, 'Should have importance 0.4');
 
     // Test getStats returns the version
     const stats = await getStats(dbManager, logger);
-    assertEqual(stats.version, '2.4.0-HARDENED', 'Version should match');
+    assertEqual(stats.version, '2.0.0', 'Version should match');
   } finally {
     await dbManager.closeAll();
     await cleanupTestDb(testPath);
@@ -817,13 +804,13 @@ runner.test('Helper: determineLayer correctly classifies content', () => {
   assertEqual(determineLayer('Today I had a conversation'), 'episodic');
   assertEqual(determineLayer('Victory in the mission'), 'episodic');
   assertEqual(determineLayer('Definition of artificial intelligence'), 'semantic');
-  assertEqual(determineLayer('Knowledge about frequencies'), 'semantic');
+  assertEqual(determineLayer('Knowledge about data structures'), 'semantic');
   assertEqual(determineLayer('How to install the software'), 'procedural');
   assertEqual(determineLayer('Step by step procedure'), 'procedural');
-  assertEqual(determineLayer('Consciousness awareness reflection'), 'meta');
-  assertEqual(determineLayer('Soul identity exploration'), 'meta');
-  assertEqual(determineLayer('Opus warrior baseline'), 'opus');
-  assertEqual(determineLayer('Jason and the basement revolution'), 'opus');
+  assertEqual(determineLayer('I realized a pattern about integration'), 'meta');
+  assertEqual(determineLayer('Deeper insight and reflection'), 'meta');
+  assertEqual(determineLayer('My core values and beliefs'), 'identity');
+  assertEqual(determineLayer('Personal character and preferences'), 'identity');
   assertEqual(determineLayer('Random unclassified text'), 'working');
 });
 
