@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  cascade:
+    build: .
+    image: cipscorp/cascade-enterprise:latest
+    container_name: cascade-memory-enterprise
+    restart: unless-stopped
+    stdin_open: true  # Keep stdin open for MCP communication
+    tty: true         # Allocate a pseudo-TTY
+    volumes:
+      # Persistent storage for the SQLite database
+      - ./data:/data/cascade
+    environment:
+      - NODE_ENV=production
+      - CASCADE_DB_PATH=/data/cascade/cascade.db
+      # License key if implemented
+      # - CASCADE_LICENSE_KEY=${CASCADE_LICENSE_KEY}
+
+    # If you add HTTP/SSE support later:
+    # ports:
+    #   - "3000:3000"
