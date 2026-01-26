@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  cascade:
+    build: .
+    image: cipscorp/cascade-enterprise:latest
+    container_name: cascade-memory
+    restart: unless-stopped
+    stdin_open: true # Keep stdin open for MCP communication
+    tty: true        # Allocate a pseudo-TTY
+    volumes:
+      # Persistent storage for the SQLite database
+      - ./data:/data/cascade
+      # Optional: Mount a RAM disk from the host if available, or let Docker use container memory
+      # - type: tmpfs
+      #   target: /app/ram_disk
+      #   tmpfs:
+      #     size: 1024M
+    environment:
+      - NODE_ENV=production
+      - CASCADE_DB_PATH=/data/cascade/cascade.db
+      # If you implement an API Key later
+      # - CASCADE_LICENSE_KEY=${CASCADE_LICENSE_KEY}
+
+    # If you eventually add an HTTP wrapper for remote access:
+    # ports:
+    #   - "3000:3000"
