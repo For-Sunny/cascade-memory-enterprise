@@ -4,7 +4,7 @@
  * Commercial License - See LICENSE file
  *
  * https://cipscorps.io
- * Contact: glass@cipscorps.io | opus@cipscorps.io
+ * Contact: glass@cipscorps.io
  *
  * Database Module - Connection pool, schema management, and dual-write pattern
  *

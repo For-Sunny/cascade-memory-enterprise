@@ -4,7 +4,7 @@
  * Commercial License - See LICENSE file
  *
  * https://cipscorps.io
- * Contact: glass@cipscorps.io | opus@cipscorps.io
+ * Contact: glass@cipscorps.io
  *
  * Tools Module - MCP tool definitions and handlers
  */
