@@ -463,18 +463,30 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
     const layers = validatedLayer ? [validatedLayer] : Object.keys(MEMORY_LAYERS);
     const results = [];
 
-    const escapedQuery = escapeLikePattern(validatedQuery);
-    const likePattern = `%${escapedQuery}%`;
+    // Tokenize query into individual keywords for better matching
+    const keywords = validatedQuery.trim().split(/\s+/).filter(k => k.length > 0);
 
     for (const currentLayer of layers) {
       const db = await dbManager.getConnection(currentLayer);
 
+      // Build parameterized OR conditions for each keyword (matches if ANY keyword found)
+      const conditions = [];
+      const params = [];
+
+      for (const keyword of keywords) {
+        const escaped = escapeLikePattern(keyword);
+        conditions.push(`(event LIKE ? ESCAPE '\\' OR context LIKE ? ESCAPE '\\')`);
+        params.push(`%${escaped}%`, `%${escaped}%`);
+      }
+
+      const whereClause = conditions.length > 0 ? conditions.join(' OR ') : '1=1';
+
       const memories = await db.allAsync(`
         SELECT * FROM memories
-        WHERE event LIKE ? ESCAPE '\\' OR context LIKE ? ESCAPE '\\'
+        WHERE ${whereClause}
         ORDER BY timestamp DESC
         LIMIT ?
-      `, [likePattern, likePattern, validatedLimit]);
+      `, [...params, validatedLimit]);
 
       for (const memory of memories) {
         results.push({

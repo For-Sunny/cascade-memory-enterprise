@@ -260,6 +260,13 @@ Search memories across layers with text matching.
 }
 ```
 
+**Query Matching Behavior:**
+- Multi-word queries use **OR logic** - matches any word in the query
+- Query `"soul matrix"` matches records containing "soul" OR "matrix"
+- Results are ranked by number of matching words (more matches = higher rank)
+- Each word is independently pattern-matched (case-insensitive)
+- For exact substring matching, use `query_layer` with `content_contains` filter
+
 **Example:**
 ```json
 {
@@ -267,6 +274,8 @@ Search memories across layers with text matching.
   "limit": 20
 }
 ```
+
+This query matches memories containing "project", "architecture", or both. Records containing both words are ranked higher.
 
 **Response:**
 ```json

@@ -5,6 +5,27 @@ All notable changes to cascade-memory will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-01-30
+
+### Fixed
+- Multi-word query matching in `recall` function now uses OR logic instead of exact substring matching
+- Queries like "soul matrix" now match records containing either "soul" OR "matrix"
+- Previously, multi-word queries required the exact substring to appear in content
+
+### Changed
+- Query words are split on whitespace and matched independently
+- Each word still uses LIKE pattern matching with proper SQL escaping
+- Results are ordered by match count (records matching more words rank higher)
+
+### Security
+- SQL injection protection maintained via `escapeLikePattern` for all query terms
+- All special characters (`%`, `_`, `\`) properly escaped in each word
+
+### Migration Note
+- **Behavior change**: This is a more permissive matching strategy
+- Queries that previously returned no results may now return matches
+- If you relied on exact substring matching, use `query_layer` with `content_contains` filter instead
+
 ## [2.0.0] - 2026-01-23
 
 ### Changed
