@@ -469,18 +469,48 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
     const layers = validatedLayer ? [validatedLayer] : Object.keys(MEMORY_LAYERS);
     const results = [];
 
-    const escapedQuery = escapeLikePattern(validatedQuery);
-    const likePattern = `%${escapedQuery}%`;
+    // Tokenize query into keywords for better multi-word matching
+    // Split on whitespace, filter empty strings, limit to reasonable number of keywords
+    const keywords = validatedQuery
+      .split(/\s+/)
+      .filter(k => k.length > 0)
+      .slice(0, 20); // Limit keywords to prevent SQL explosion
+
+    // Build WHERE clause: match if ANY keyword is found in event OR context
+    // Each keyword is escaped and parameterized for SQL injection protection
+    let whereClause;
+    let whereParams;
+
+    if (keywords.length === 0) {
+      // Edge case: empty query after trimming - match nothing
+      whereClause = '1 = 0';
+      whereParams = [];
+    } else if (keywords.length === 1) {
+      // Single keyword - original behavior
+      const escapedKeyword = escapeLikePattern(keywords[0]);
+      whereClause = `(event LIKE ? ESCAPE '\\' OR context LIKE ? ESCAPE '\\')`;
+      whereParams = [`%${escapedKeyword}%`, `%${escapedKeyword}%`];
+    } else {
+      // Multiple keywords - OR logic: match if ANY keyword found
+      const conditions = [];
+      whereParams = [];
+      for (const keyword of keywords) {
+        const escapedKeyword = escapeLikePattern(keyword);
+        conditions.push(`(event LIKE ? ESCAPE '\\' OR context LIKE ? ESCAPE '\\')`);
+        whereParams.push(`%${escapedKeyword}%`, `%${escapedKeyword}%`);
+      }
+      whereClause = conditions.join(' OR ');
+    }
 
     for (const currentLayer of layers) {
       const db = await dbManager.getConnection(currentLayer);
 
       const memories = await db.allAsync(`
         SELECT * FROM memories
-        WHERE event LIKE ? ESCAPE '\\' OR context LIKE ? ESCAPE '\\'
+        WHERE ${whereClause}
         ORDER BY timestamp DESC
         LIMIT ?
-      `, [likePattern, likePattern, validatedLimit]);
+      `, [...whereParams, validatedLimit]);
 
       for (const memory of memories) {
         results.push({
