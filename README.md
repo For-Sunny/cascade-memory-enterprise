@@ -17,7 +17,7 @@ CASCADE gives your AI a memory system with six specialized layers:
 | **semantic** | Facts and knowledge |
 | **procedural** | How-to and process memory |
 | **meta** | Memory about memory (reflection) |
-| **opus** | High-importance persistent storage |
+| **identity** | High-importance persistent storage |
 
 Memories decay over time unless reinforced. Important memories persist. Trivial ones fade. Like biological memory, but faster.
 
@@ -166,7 +166,7 @@ DEBUG=false
 
 ## API Reference
 
-CASCADE exposes four MCP tools:
+CASCADE exposes six MCP tools:
 
 ### remember
 
@@ -188,7 +188,7 @@ Store a memory in a specific layer.
 
 **Parameters:**
 - `content` (required): The memory content
-- `layer` (optional): episodic, semantic, procedural, meta, opus, working. Default: episodic
+- `layer` (optional): episodic, semantic, procedural, meta, identity, working. Default: episodic
 - `importance` (optional): 0.0-1.0. Higher values resist decay. Default: 0.5
 - `metadata` (optional): Key-value pairs for additional context
 
@@ -242,6 +242,43 @@ Get system status and statistics.
 ```
 
 Returns memory counts per layer, decay status, and database size.
+
+### get_stats
+
+Get detailed statistics for all memory layers.
+
+```json
+{
+  "tool": "get_stats",
+  "arguments": {}
+}
+```
+
+Returns per-layer statistics including memory count, average importance, average emotional intensity, and most recent timestamp.
+
+### save_to_layer
+
+Save memory to a specific layer with full control over metadata.
+
+```json
+{
+  "tool": "save_to_layer",
+  "arguments": {
+    "layer": "semantic",
+    "content": "Important fact to remember",
+    "metadata": {
+      "importance": 0.9,
+      "emotional_intensity": 0.3,
+      "context": "user knowledge base"
+    }
+  }
+}
+```
+
+**Parameters:**
+- `layer` (required): Target layer (episodic, semantic, procedural, meta, identity, working)
+- `content` (required): The memory content to save
+- `metadata` (optional): Full metadata control including importance, emotional_intensity, context
 
 ---
 
