@@ -11,14 +11,13 @@ services:
     volumes:
       # Persistent storage for the SQLite database
       - ./data:/data/cascade
-      # Optional: Mount a RAM disk from the host if available, or let Docker use container memory
-      # - type: tmpfs
-      #   target: /app/ram_disk
-      #   tmpfs:
-      #     size: 1024M
+    # RAM disk for sub-millisecond memory acceleration
+    tmpfs:
+      - /ram_disk:size=512M
     environment:
       - NODE_ENV=production
       - CASCADE_DB_PATH=/data/cascade/cascade.db
+      - CASCADE_RAM_PATH=/ram_disk
       # If you implement an API Key later
       # - CASCADE_LICENSE_KEY=${CASCADE_LICENSE_KEY}
 

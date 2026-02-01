@@ -35,7 +35,11 @@ import {
 // ============================================
 
 // DUAL-WRITE Configuration
-export const RAM_DB_PATH = process.env.CASCADE_RAM_PATH || 'R:\\CASCADE_DB';
+// Cross-platform fallback: HOME (Linux/Mac), USERPROFILE (Windows), /tmp (last resort)
+export const RAM_DB_PATH = process.env.CASCADE_RAM_PATH || path.join(
+  process.env.HOME || process.env.USERPROFILE || '/tmp',
+  'cascade_ram'
+);
 export const DISK_DB_PATH = process.env.CASCADE_DB_PATH || path.join(
   process.env.HOME || process.env.USERPROFILE,
   '.cascade-memory',
