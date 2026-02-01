@@ -6,7 +6,7 @@
  * Licensed under MIT License
  *
  * https://cipscorps.io
- * Contact: glass@cipscorps.io | opus@cipscorps.io
+ * Contact: glass@cipscorps.io
  *
  * MCP Server - 6-Layer Memory Architecture
  *

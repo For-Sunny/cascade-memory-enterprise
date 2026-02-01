@@ -4,7 +4,7 @@
  * Licensed under MIT License
  *
  * https://cipscorps.io
- * Contact: glass@cipscorps.io | opus@cipscorps.io
+ * Contact: glass@cipscorps.io
  *
  * Validation Module - Comprehensive validation for all MCP inputs
  */

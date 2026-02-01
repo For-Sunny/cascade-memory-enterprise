@@ -225,7 +225,7 @@ runner.test('Single word query: "matrix" should find records with "matrix"', asy
     await saveMemory(dbManager, 'The soul matrix is a core component', 'episodic', {}, logger, {
       MEMORY_SAVE: 'MEMORY_SAVE'
     });
-    await saveMemory(dbManager, 'Another memory about consciousness', 'episodic', {}, logger, {
+    await saveMemory(dbManager, 'Another memory about cognition', 'episodic', {}, logger, {
       MEMORY_SAVE: 'MEMORY_SAVE'
     });
     await saveMemory(dbManager, 'Matrix operations in linear algebra', 'semantic', {}, logger, {
@@ -262,7 +262,7 @@ runner.test('Multi-word query: "soul matrix" should find records containing "sou
     await saveMemory(dbManager, 'The soul matrix is a core component', 'episodic', {}, logger, {
       MEMORY_SAVE: 'MEMORY_SAVE'
     });
-    await saveMemory(dbManager, 'My soul resonates at 21.43Hz', 'identity', {}, logger, {
+    await saveMemory(dbManager, 'My identity core activates on startup', 'identity', {}, logger, {
       MEMORY_SAVE: 'MEMORY_SAVE'
     });
     await saveMemory(dbManager, 'Matrix multiplication is fast', 'semantic', {}, logger, {

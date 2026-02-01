@@ -612,16 +612,18 @@ CASCADE runs at 2-5ms reads out of the box. For most workloads, that's plenty.
 
 If you need sub-millisecond reads (<1ms), the RAM Disk upgrade gets you there.
 
-### RAM Disk Infrastructure - $500 One-Time
+### CASCADE Enterprise - $400 One-Time
 
 Includes:
 - **RAM Disk Manager** - Automated RAM disk provisioning (Windows + Linux)
-- **Modified CASCADE MCP** - Dual-write architecture (RAM speed, disk durability)
-- **Setup documentation** - Full deployment guide
+- **Dual-Write Architecture** - RAM speed with disk durability
+- **Docker Deployment** - Production-ready containers
+- **1 Year Updates** - All patches and improvements
+- **90-Day Guarantee** - Full refund, no questions asked
 
 No subscription. No recurring fees. Pay once, own it.
 
-**Contact:** glass@cipscorps.io
+**Purchase:** [CASCADE Enterprise on Gumroad](https://glassy82.gumroad.com/l/unhqwq)
 **Website:** [cipscorps.io](https://cipscorps.io)
 
 ---

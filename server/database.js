@@ -4,7 +4,7 @@
  * Licensed under MIT License
  *
  * https://cipscorps.io
- * Contact: glass@cipscorps.io | opus@cipscorps.io
+ * Contact: glass@cipscorps.io
  *
  * Database Module - Connection pool and schema management
  */
