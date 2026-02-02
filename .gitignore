@@ -7,3 +7,7 @@ data/
 
 # Internal development files (contain local paths)
 SECURITY_AUDIT_REPORT.md
+
+# Test database artifacts
+tests/test_db_*
+tests/test_recall_db_*

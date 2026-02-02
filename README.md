@@ -623,7 +623,7 @@ Includes:
 
 No subscription. No recurring fees. Pay once, own it.
 
-**Purchase:** [CASCADE Enterprise on Gumroad](https://glassy82.gumroad.com/l/unhqwq)
+**Purchase:** [CASCADE Enterprise on Gumroad](https://store.cipscorps.io/l/unhqwq)
 **Website:** [cipscorps.io](https://cipscorps.io)
 
 ---

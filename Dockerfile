@@ -33,7 +33,12 @@ COPY --from=builder /app/package.json ./
 
 # Environment variables
 ENV NODE_ENV=production
-ENV CASCADE_DB_PATH=/data/cascade/cascade.db
+ENV CASCADE_DB_PATH=/data/cascade
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S cascade && adduser -u 1001 -S cascade -G cascade
+RUN chown -R cascade:cascade /app /data/cascade
+USER cascade
 
 # Entrypoint
 CMD ["node", "server/index.js"]

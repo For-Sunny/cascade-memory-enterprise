@@ -17,7 +17,8 @@ const __dirname = path.dirname(__filename);
 const testFiles = [
   'validation.test.js',
   'index.test.js',
-  'recall-query.test.js'
+  'recall-query.test.js',
+  'integration.test.js'
 ];
 
 let totalPass = 0;

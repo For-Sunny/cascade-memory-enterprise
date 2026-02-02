@@ -23,6 +23,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { EventEmitter } from 'events';
+import crypto from 'crypto';
 import fs from 'fs';
 
 // Import validation module
@@ -134,7 +135,7 @@ class StructuredLogger extends EventEmitter {
   }
 
   _generateSessionId() {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now().toString(36)}-${crypto.randomBytes(6).toString('hex')}`;
   }
 
   _generateRequestId() {

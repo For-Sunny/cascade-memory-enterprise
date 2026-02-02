@@ -243,7 +243,7 @@ const runner = new TestRunner();
 runner.test('Full Flow: Save memory and recall it', async () => {
   const testPath = await setupTestDb();
   const logger = createMockLogger();
-  const dbManager = new CascadeDatabase(testPath, [testPath], logger);
+  const dbManager = new CascadeDatabase(testPath, logger);
 
   try {
     // Save a memory
@@ -274,7 +274,7 @@ runner.test('Full Flow: Save memory and recall it', async () => {
 runner.test('Full Flow: Auto-determine layer from content', async () => {
   const testPath = await setupTestDb();
   const logger = createMockLogger();
-  const dbManager = new CascadeDatabase(testPath, [testPath], logger);
+  const dbManager = new CascadeDatabase(testPath, logger);
 
   try {
     // Content mentioning "how to" should go to procedural layer
@@ -313,7 +313,7 @@ runner.test('Full Flow: Auto-determine layer from content', async () => {
 runner.test('All 6 Layers: Save and recall from each layer', async () => {
   const testPath = await setupTestDb();
   const logger = createMockLogger();
-  const dbManager = new CascadeDatabase(testPath, [testPath], logger);
+  const dbManager = new CascadeDatabase(testPath, logger);
 
   try {
     const testData = [
@@ -614,7 +614,7 @@ runner.test('Error Handling: createSuccessResponse formats correctly', () => {
 runner.test('Database: Query layer with filters', async () => {
   const testPath = await setupTestDb();
   const logger = createMockLogger();
-  const dbManager = new CascadeDatabase(testPath, [testPath], logger);
+  const dbManager = new CascadeDatabase(testPath, logger);
 
   try {
     // Save memories with different importance levels
@@ -654,7 +654,7 @@ runner.test('Database: Query layer with filters', async () => {
 runner.test('Database: Query layer with ordering', async () => {
   const testPath = await setupTestDb();
   const logger = createMockLogger();
-  const dbManager = new CascadeDatabase(testPath, [testPath], logger);
+  const dbManager = new CascadeDatabase(testPath, logger);
 
   try {
     // Save memories with unique content for searching
@@ -691,7 +691,7 @@ runner.test('Database: Query layer with ordering', async () => {
 runner.test('Database: Recall across all layers', async () => {
   const testPath = await setupTestDb();
   const logger = createMockLogger();
-  const dbManager = new CascadeDatabase(testPath, [testPath], logger);
+  const dbManager = new CascadeDatabase(testPath, logger);
 
   try {
     // Save memories to different layers
@@ -707,7 +707,7 @@ runner.test('Database: Recall across all layers', async () => {
 
     // Close and reopen to ensure writes are visible to reads
     await dbManager.closeAll();
-    const dbManager2 = new CascadeDatabase(testPath, [testPath], logger);
+    const dbManager2 = new CascadeDatabase(testPath, logger);
 
     // Recall without specifying layer should search all
     const memories = await recallMemories(dbManager2, 'Cross layer test', null, 10, logger, {
@@ -729,7 +729,7 @@ runner.test('Database: Recall across all layers', async () => {
 runner.test('Database: getStatus returns correct information', async () => {
   const testPath = await setupTestDb();
   const logger = createMockLogger();
-  const dbManager = new CascadeDatabase(testPath, [testPath], logger);
+  const dbManager = new CascadeDatabase(testPath, logger);
 
   try {
     // Save a memory first
@@ -739,11 +739,11 @@ runner.test('Database: getStatus returns correct information', async () => {
 
     // Close and reopen to ensure writes are visible to reads
     await dbManager.closeAll();
-    const dbManager2 = new CascadeDatabase(testPath, [testPath], logger);
+    const dbManager2 = new CascadeDatabase(testPath, logger);
 
     const status = await getStatus(dbManager2, logger);
 
-    assert(status.cascade_path, 'Should have cascade_path');
+    assert(status.db_path, 'Should have db_path');
     assert(status.layers, 'Should have layers object');
     assert(status.layers.episodic, 'Should have episodic layer');
     assert(status.layers.episodic.count >= 1, 'Episodic should have at least 1 memory');
@@ -759,7 +759,7 @@ runner.test('Database: getStatus returns correct information', async () => {
 runner.test('Database: getStats returns detailed statistics', async () => {
   const testPath = await setupTestDb();
   const logger = createMockLogger();
-  const dbManager = new CascadeDatabase(testPath, [testPath], logger);
+  const dbManager = new CascadeDatabase(testPath, logger);
 
   try {
     // Save memories with different settings and unique content

@@ -13,7 +13,7 @@ services:
       - ./data:/data/cascade
     environment:
       - NODE_ENV=production
-      - CASCADE_DB_PATH=/data/cascade/cascade.db
+      - CASCADE_DB_PATH=/data/cascade
       # License key if implemented
       # - CASCADE_LICENSE_KEY=${CASCADE_LICENSE_KEY}
 

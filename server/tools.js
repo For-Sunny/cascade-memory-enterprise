@@ -713,8 +713,7 @@ export async function getStatus(dbManager, logger = null) {
 
         status.layers[layer] = {
           status: 'connected',
-          count,
-          path: fullPath
+          count
         };
         status.total_memories += count;
       } catch (error) {
