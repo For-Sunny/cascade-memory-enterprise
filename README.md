@@ -610,13 +610,13 @@ CREATE INDEX idx_memories_importance ON memories(importance);
 
 CASCADE runs at 2-5ms reads out of the box. For most workloads, that's plenty.
 
-If you need sub-millisecond reads (<1ms), the RAM Disk upgrade gets you there.
+If you need sub-millisecond reads (<1ms), the Speed Enhancement upgrade gets you there.
 
 ### CASCADE Enterprise - $400 One-Time
 
 Includes:
-- **RAM Disk Manager** - Automated RAM disk provisioning (Windows + Linux)
-- **Dual-Write Architecture** - RAM speed with disk durability
+- **Speed Enhancement Module** - Proprietary acceleration layer (Windows + Linux)
+- **Dual-Write Architecture** - Sub-millisecond speed with full durability
 - **Docker Deployment** - Production-ready containers
 - **1 Year Updates** - All patches and improvements
 - **90-Day Guarantee** - Full refund, no questions asked
