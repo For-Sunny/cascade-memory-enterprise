@@ -1,4 +1,4 @@
-CASCADE ENTERPRISE RAM - COMMERCIAL SOFTWARE LICENSE
+CASCADE ENTERPRISE RAM + DOCKER - COMMERCIAL SOFTWARE LICENSE
 
 Copyright (c) 2025-2026 C.I.P.S. LLC
 All rights reserved.
@@ -18,8 +18,8 @@ If it doesn't work for you, full refund within 90 days.
 
 1. DEFINITIONS
 
-"Software" means CASCADE Enterprise RAM, including all source code, binaries,
-documentation, and associated files provided with this license.
+"Software" means CASCADE Enterprise RAM + Docker, including all source code,
+binaries, documentation, and associated files provided with this license.
 
 "Licensee" means the individual or organization that purchased this license.
 
@@ -73,7 +73,15 @@ Source code is provided for transparency and to enable internal modification.
 Provision of source code does not constitute an open-source license. All
 intellectual property rights remain with CIPS Corp.
 
-6. 90-DAY MONEY-BACK GUARANTEE
+6. INTELLECTUAL PROPERTY
+
+CIPS Corp retains all right, title, and interest in and to the Software,
+including all patents, copyrights, trademarks, trade secrets, and other
+intellectual property rights. Certain methods and processes embodied in
+this Software may be protected under pending patent applications filed
+with the United States Patent and Trademark Office.
+
+7. 90-DAY MONEY-BACK GUARANTEE
 
 If the Software does not meet the Licensee's needs for any reason, CIPS Corp
 will provide a full refund of the purchase price within ninety (90) days of
@@ -84,7 +92,7 @@ To request a refund, contact: glass@cipscorps.io
 Upon refund, this license terminates and the Licensee must destroy all copies
 of the Software.
 
-7. WARRANTY DISCLAIMER
+8. WARRANTY DISCLAIMER
 
 EXCEPT FOR THE 90-DAY MONEY-BACK GUARANTEE ABOVE, THE SOFTWARE IS PROVIDED
 "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
@@ -94,7 +102,7 @@ OR NON-INFRINGEMENT.
 CIPS CORP DOES NOT WARRANT THAT THE SOFTWARE WILL BE ERROR-FREE OR
 UNINTERRUPTED.
 
-8. LIMITATION OF LIABILITY
+9. LIMITATION OF LIABILITY
 
 IN NO EVENT SHALL CIPS CORP OR ITS CONTRIBUTORS BE LIABLE FOR ANY INDIRECT,
 INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, REGARDLESS OF THE
@@ -103,20 +111,20 @@ CAUSE OF ACTION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 CIPS CORP'S TOTAL LIABILITY UNDER THIS LICENSE SHALL NOT EXCEED THE AMOUNT
 PAID BY THE LICENSEE FOR THE SOFTWARE.
 
-9. TERMINATION
+10. TERMINATION
 
 This license terminates automatically if the Licensee violates any of its
 terms. Upon termination, the Licensee must destroy all copies of the Software.
 
-Sections 5, 7, 8, and 10 survive termination.
+Sections 5, 6, 8, 9, and 11 survive termination.
 
-10. GOVERNING LAW
+11. GOVERNING LAW
 
 This license shall be governed by and construed in accordance with the laws
 of the United States. Any disputes arising under this license shall be resolved
 in the courts of competent jurisdiction.
 
-11. ENTIRE AGREEMENT
+12. ENTIRE AGREEMENT
 
 This license constitutes the entire agreement between the parties regarding
 the Software and supersedes all prior negotiations, representations, or
@@ -124,7 +132,7 @@ agreements relating to this subject matter.
 
 ================================================================================
 
-PURCHASE PRICE: $500.00 USD (one-time)
+PURCHASE PRICE: $400.00 USD (one-time)
 CONTACT: glass@cipscorps.io
 PUBLISHER: C.I.P.S. LLC (CIPS Corp)
 

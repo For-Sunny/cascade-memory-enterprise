@@ -27,9 +27,9 @@ This guide allows you to run **CASCADE Enterprise RAM** as an isolated, containe
 
 ## Persistence
 
-Your memory database is persisted in the `./data` directory on your host machine (mapped to `/data/cascade` inside the container).
-*   **Backup:** Simply copy the `./data/cascade.db` file.
-*   **Migration:** Replace `./data/cascade.db` to restore a previous memory state.
+Your memory database is persisted in the `./data` directory on your host machine (mapped to `/data/cascade` inside the container). CASCADE uses 6 separate layer files for organized memory storage:
+*   **Backup:** Copy the entire `./data` directory (contains `episodic_memory.db`, `semantic_memory.db`, `procedural_memory.db`, `meta_memory.db`, `identity_memory.db`, `working_memory.db`).
+*   **Migration:** Replace the entire `./data` directory to restore a previous memory state.
 
 ## Integration
 
