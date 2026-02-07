@@ -710,7 +710,7 @@ export interface ToolDefinition {
  */
 export interface DatabaseConnection {
   path: string;
-  db: unknown; // sqlite3.Database instance
+  db: unknown; // better-sqlite3.Database instance
 }
 
 /**

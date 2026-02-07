@@ -3,13 +3,14 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Install build dependencies for sqlite3
+# better-sqlite3 ships prebuilt binaries for most platforms (including ARM64)
+# Build tools only needed as fallback if no prebuilt binary exists
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package.json ./
 
-# Install dependencies (including native sqlite3 build)
+# Install dependencies (better-sqlite3 with prebuilt binaries)
 RUN npm install --production
 
 # Copy source code
@@ -40,7 +41,7 @@ RUN chown -R cascade:cascade /app
 
 # Environment variables
 ENV NODE_ENV=production
-ENV CASCADE_DB_PATH=/data/cascade/cascade.db
+ENV CASCADE_DB_PATH=/data/cascade
 ENV CASCADE_RAM_PATH=/app/ram_disk
 # Note: In Docker, RAM disk is usually just a folder unless tmpfs is mounted
 

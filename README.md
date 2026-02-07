@@ -1,8 +1,8 @@
 # CASCADE Enterprise RAM
 
-**6-Layer Temporal Memory for AI Systems**
+**6-Layer Structured Memory for AI Systems**
 
-Sub-millisecond access. Temporal decay. Dual-write persistence. Your AI remembers what matters and forgets what doesn't.
+Sub-millisecond access. Importance scoring. Dual-write persistence. Your AI remembers what matters.
 
 ---
 
@@ -19,18 +19,30 @@ CASCADE gives your AI a memory system with six specialized layers:
 | **meta** | Memory about memory (reflection) |
 | **identity** | High-importance persistent storage |
 
-Memories decay over time unless reinforced. Important memories persist. Trivial ones fade. Like biological memory, but faster.
+Important memories persist based on the importance score you assign. Higher importance = longer retention when you implement your own retention policies.
 
 ---
 
 ## Features
 
 - **Sub-millisecond access** via optional RAM disk acceleration
-- **Temporal decay** - memories fade naturally based on age and importance
-- **Importance scoring** - high-value memories resist decay
+- **Importance scoring** - high-value memories persist based on score you assign
 - **Dual-write** - RAM for speed, SQLite for persistence
 - **MCP server** - native integration with Claude and other MCP clients
 - **Six specialized layers** - right memory in the right place
+
+---
+
+## Platform Support
+
+| Platform | Architecture | Status |
+|----------|-------------|--------|
+| Windows x64 | Intel/AMD | Supported |
+| Windows ARM64 | Snapdragon/Qualcomm | Supported (v2.1.0+) |
+| Linux x64 | Intel/AMD | Supported |
+| Linux ARM64 | ARM servers, Raspberry Pi | Supported |
+| macOS x64 | Intel | Supported |
+| macOS ARM64 | Apple Silicon | Supported |
 
 ---
 
@@ -192,8 +204,8 @@ Store a memory in a specific layer.
 
 **Parameters:**
 - `content` (required): The memory content
-- `layer` (optional): episodic, semantic, procedural, meta, identity, working. Default: episodic
-- `importance` (optional): 0.0-1.0. Higher values resist decay. Default: 0.5
+- `layer` (optional): episodic, semantic, procedural, meta, identity, working. Default: auto-determined from content (fallback: working)
+- `importance` (optional): 0.0-1.0. Higher values indicate higher priority. Default: 0.7
 - `metadata` (optional): Key-value pairs for additional context
 
 ### recall
@@ -225,14 +237,17 @@ Get all memories from a specific layer.
   "tool": "query_layer",
   "arguments": {
     "layer": "working",
-    "include_decayed": false
+    "options": {
+      "limit": 50,
+      "order_by": "timestamp DESC"
+    }
   }
 }
 ```
 
 **Parameters:**
 - `layer` (required): Layer to query
-- `include_decayed` (optional): Include memories below decay threshold. Default: false
+- `options` (optional): Object with `filters`, `limit`, `order_by`
 
 ### get_status
 
@@ -245,7 +260,7 @@ Get system status and statistics.
 }
 ```
 
-Returns memory counts per layer, decay status, and database size.
+Returns memory counts per layer, health status, version, and dual-write configuration.
 
 ### get_stats
 
@@ -336,6 +351,12 @@ SQLite doesn't handle concurrent writes. Solutions:
 
 RAM disk contents are lost on reboot. Ensure `CASCADE_DB_PATH` points to persistent storage. The dual-write system writes to both locations, but you need the disk path configured.
 
+### npm install fails on ARM64 Windows
+
+Older versions (< 2.1.0) used the `sqlite3` npm package, which required native compilation via node-gyp. This failed on ARM64 Windows due to missing prebuilt binaries.
+
+v2.1.0 replaced `sqlite3` with `better-sqlite3`, which ships prebuilt binaries for ARM64 Windows, x64 Windows, Linux, and macOS. Run `npm install` on v2.1.0+ and it works.
+
 ### RAM disk creation fails
 
 - **Windows**: ImDisk driver required. The manager installs it automatically, but you need Admin rights.
@@ -364,7 +385,7 @@ Per-developer licensing. See EULA for full terms including 90-day money-back gua
 
 Copyright (c) 2025-2026 C.I.P.S. LLC. All rights reserved.
 
-Portions of the technology described herein are subject to pending patent application(s) filed with the United States Patent and Trademark Office. The methods, processes, and architectures embodied in this software -- including but not limited to temporal memory decay modeling, multi-layer memory orchestration, and GPU-optimized tensor operations for semantic retrieval -- may be protected under one or more issued or pending patents.
+Portions of the technology described herein are subject to pending patent application(s) filed with the United States Patent and Trademark Office. The methods, processes, and architectures embodied in this software -- including but not limited to multi-layer memory orchestration, dual-write persistence patterns, and importance-weighted memory retrieval -- may be protected under one or more issued or pending patents.
 
 Unauthorized reproduction, reverse engineering, creation of derivative works, or commercial redistribution is strictly prohibited and may constitute infringement of intellectual property rights protected under U.S. and international law.
 

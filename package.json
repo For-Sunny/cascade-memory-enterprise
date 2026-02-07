@@ -1,6 +1,6 @@
 {
   "name": "@cipscorp/cascade-enterprise-ram",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "CASCADE Enterprise - 6-Layer Memory Architecture with RAM Disk Acceleration. Sub-millisecond reads via dual-write pattern (RAM speed + disk durability).",
   "type": "module",
   "main": "server/index.js",
@@ -42,7 +42,7 @@
   "homepage": "https://cipscorps.io",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "sqlite3": "^5.1.7"
+    "better-sqlite3": "^11.7.0"
   },
   "engines": {
     "node": ">=18.0.0"

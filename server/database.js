@@ -15,8 +15,7 @@
  * - READ: RAM first (instant) -> Disk fallback
  */
 
-import sqlite3 from 'sqlite3';
-import { promisify } from 'util';
+import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
@@ -261,20 +260,33 @@ export class CascadeDatabase {
   }
 
   /**
-   * Create a promisified database connection
+   * Create a better-sqlite3 database connection with async-compatible wrappers
    */
-  async createDbConnection(dbFile) {
-    const db = new sqlite3.Database(dbFile);
-    db.runAsync = promisify(db.run.bind(db));
-    db.getAsync = promisify(db.get.bind(db));
-    db.allAsync = promisify(db.all.bind(db));
+  createDbConnection(dbFile) {
+    const db = new Database(dbFile);
+    db.pragma('journal_mode = WAL');
+
+    // Provide async-compatible method wrappers so callers using await still work
+    db.runAsync = function(sql, params = []) {
+      const arrParams = Array.isArray(params) ? params : [params];
+      return db.prepare(sql).run(...arrParams);
+    };
+    db.getAsync = function(sql, params = []) {
+      const arrParams = Array.isArray(params) ? params : [params];
+      return db.prepare(sql).get(...arrParams);
+    };
+    db.allAsync = function(sql, params = []) {
+      const arrParams = Array.isArray(params) ? params : [params];
+      return db.prepare(sql).all(...arrParams);
+    };
+
     return db;
   }
 
   /**
    * Get database connection for reading (from RAM if available)
    */
-  async getConnection(layer) {
+  getConnection(layer) {
     const validatedLayer = validateLayer(layer, true);
     if (!MEMORY_LAYERS[validatedLayer]) {
       throw new ValidationError('layer', `Invalid memory layer: ${layer}`);
@@ -296,12 +308,12 @@ export class CascadeDatabase {
         }
       }
 
-      const db = await this.createDbConnection(dbFile);
-      await this.ensureSchema(db, layer);
+      const db = this.createDbConnection(dbFile);
+      this.ensureSchema(db, layer);
       this.readConnections.set(layer, db);
       this.log('info', `Connected to ${layer} memory layer`);
 
-      await this.initWriteConnections(layer);
+      this.initWriteConnections(layer);
 
       return db;
     } catch (error) {
@@ -320,7 +332,7 @@ export class CascadeDatabase {
   /**
    * Initialize write connections for a layer (dual-write pattern)
    */
-  async initWriteConnections(layer) {
+  initWriteConnections(layer) {
     if (this.writeConnections.has(layer)) {
       return this.writeConnections.get(layer);
     }
@@ -335,8 +347,8 @@ export class CascadeDatabase {
         }
 
         const dbFile = path.join(writePath, MEMORY_LAYERS[layer]);
-        const db = await this.createDbConnection(dbFile);
-        await this.ensureSchema(db, layer);
+        const db = this.createDbConnection(dbFile);
+        this.ensureSchema(db, layer);
         connections.push({ path: writePath, db });
         this.log('info', `Write connection established for ${layer} (${i === 0 ? 'primary' : 'secondary'})`);
       }
@@ -359,9 +371,9 @@ export class CascadeDatabase {
   /**
    * Ensure database schema exists
    */
-  async ensureSchema(db, layer) {
+  ensureSchema(db, layer) {
     try {
-      await db.runAsync(`
+      db.exec(`
         CREATE TABLE IF NOT EXISTS memories (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           timestamp REAL NOT NULL,
@@ -373,8 +385,8 @@ export class CascadeDatabase {
           metadata TEXT
         )
       `);
-      await db.runAsync(`CREATE INDEX IF NOT EXISTS idx_memories_timestamp ON memories(timestamp)`);
-      await db.runAsync(`CREATE INDEX IF NOT EXISTS idx_memories_importance ON memories(importance)`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_timestamp ON memories(timestamp)`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_importance ON memories(importance)`);
     } catch (error) {
       this.log('error', `Schema error for ${layer}:`, { error: error.message });
       throw new DatabaseError(
@@ -389,14 +401,14 @@ export class CascadeDatabase {
    * Execute write operation on all write paths (DISK first, then RAM)
    * Returns result from first (disk) write
    */
-  async dualWrite(layer, operation, params = []) {
-    const writeConns = await this.initWriteConnections(layer);
+  dualWrite(layer, operation, params = []) {
+    const writeConns = this.initWriteConnections(layer);
     let primaryResult = null;
 
     for (let i = 0; i < writeConns.length; i++) {
       const { path: writePath, db } = writeConns[i];
       try {
-        const result = await db.runAsync(operation, params);
+        const result = db.runAsync(operation, params);
         if (i === 0) {
           primaryResult = result;
         }
@@ -418,11 +430,13 @@ export class CascadeDatabase {
 
   /**
    * Get last insert ID from primary write connection
+   * In better-sqlite3, lastInsertRowid is returned from .run() result.
+   * This method still works via SQL query for compatibility.
    */
-  async getLastInsertId(layer) {
-    const writeConns = await this.initWriteConnections(layer);
+  getLastInsertId(layer) {
+    const writeConns = this.initWriteConnections(layer);
     if (writeConns.length > 0) {
-      const result = await writeConns[0].db.getAsync('SELECT last_insert_rowid() as id');
+      const result = writeConns[0].db.getAsync('SELECT last_insert_rowid() as id');
       return result.id;
     }
     return null;
@@ -431,15 +445,15 @@ export class CascadeDatabase {
   /**
    * Close all connections
    */
-  async closeAll() {
+  closeAll() {
     for (const [layer, db] of this.readConnections) {
-      await promisify(db.close.bind(db))();
+      db.close();
       this.log('info', `Closed ${layer} read database`);
     }
 
     for (const [layer, conns] of this.writeConnections) {
       for (const { path: writePath, db } of conns) {
-        await promisify(db.close.bind(db))();
+        db.close();
         this.log('info', `Closed ${layer} write database at ${writePath}`);
       }
     }

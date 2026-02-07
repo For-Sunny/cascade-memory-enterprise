@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.0] - 2026-02-07
+
+### Changed
+
+- Replaced `sqlite3` npm package with `better-sqlite3`. Resolves node-gyp build failures on ARM64 Windows (Snapdragon/Qualcomm). Prebuilt binaries now cover ARM64 Windows, x64 Windows, Linux, and macOS. No API changes.
+
+### Fixed
+
+- Installation on ARM64 Windows no longer requires native compilation toolchain (python3, make, g++)
+- Eliminates transitive npm audit vulnerabilities from sqlite3 -> node-gyp -> tar dependency chain
+- Docker image build no longer needs build-essential packages, reducing image size
+
+---
+
 ## [2.0.0] - 2026-01-23
 
 ### Release: CASCADE Enterprise + RAM Disk
@@ -14,7 +28,7 @@ First commercial release. Persistent 6-layer memory for AI systems with sub-mill
 - Enterprise security: input validation, SQL injection prevention, rate limiting
 - Structured JSON logging with audit trail
 - Automatic content-based layer routing
-- Temporal decay with importance scoring
+- Importance scoring for memory prioritization
 - Full MCP tool suite: remember, recall, query_layer, save_to_layer, get_status, get_stats
 - 90-day money-back guarantee
 

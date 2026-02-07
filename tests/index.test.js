@@ -478,7 +478,7 @@ testGroup('Global Logger Instance', () => {
   });
 
   test('logger has expected version', () => {
-    assert(logger.version === '2.0.0');
+    assert(logger.version === '2.1.0');
   });
 
   test('logger has logging methods', () => {

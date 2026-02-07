@@ -105,8 +105,7 @@ The memory persists on disk. The RAM layer gives you sub-millisecond access. Bot
 
 - **6-layer memory architecture** -- episodic, semantic, procedural, meta, identity, working
 - **Sub-millisecond RAM access** with automatic disk persistence
-- **Temporal decay** -- memories fade unless reinforced, like biological memory
-- **Importance scoring** -- high-value memories resist decay
+- **Importance scoring** -- high-value memories persist; mark what matters
 - **Cross-layer search** -- one query hits all layers
 
 You're running. Build something.

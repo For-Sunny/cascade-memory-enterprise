@@ -115,7 +115,7 @@ class StructuredLogger extends EventEmitter {
   constructor(options = {}) {
     super();
     this.serviceName = options.serviceName || 'cascade-memory';
-    this.version = options.version || '2.0.0';
+    this.version = options.version || '2.1.0';
     this.minLevel = this._parseLevel(options.minLevel || (process.env.LOG_LEVEL || 'info'));
     this.jsonOutput = options.jsonOutput !== false;
     this.colorOutput = options.colorOutput !== false && process.stderr.isTTY;
@@ -357,7 +357,7 @@ const AUDIT_LOG_PATH = process.env.CASCADE_AUDIT_LOG || null;
 
 const logger = new StructuredLogger({
   serviceName: 'cascade-memory',
-  version: '2.0.0',
+  version: '2.1.0',
   minLevel: LOG_LEVEL,
   jsonOutput: process.env.LOG_FORMAT !== 'text',
   auditEnabled: true,
@@ -380,7 +380,7 @@ const rateLimiter = new RateLimiter(logger);
 const server = new Server(
   {
     name: "cascade-memory",
-    version: "2.0.0",
+    version: "2.1.0",
   },
   {
     capabilities: {
@@ -507,7 +507,7 @@ async function main() {
   const startTime = Date.now();
 
   logger.info('============================================');
-  logger.info('CASCADE Enterprise Memory MCP Server v2.0.0');
+  logger.info('CASCADE Enterprise Memory MCP Server v2.1.0');
   logger.info('============================================');
 
   logger.info('Server configuration loaded', {
@@ -601,7 +601,7 @@ async function main() {
   });
 
   logger.info('============================================');
-  logger.info('CASCADE Enterprise v2.0.0 ready!', {
+  logger.info('CASCADE Enterprise v2.1.0 ready!', {
     startupDurationMs,
     layersInitialized: initializedLayers.length,
     layersFailed: failedLayers.length,

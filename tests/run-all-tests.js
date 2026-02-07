@@ -17,7 +17,8 @@ const __dirname = path.dirname(__filename);
 const testFiles = [
   'validation.test.js',
   'index.test.js',
-  'content_analyzer.test.js'
+  'content_analyzer.test.js',
+  'integration.test.js'
 ];
 
 let totalPass = 0;
@@ -33,8 +34,7 @@ async function runTest(testFile) {
 
     const proc = spawn('node', [testPath], {
       cwd: __dirname,
-      stdio: 'inherit',
-      shell: true
+      stdio: 'inherit'
     });
 
     proc.on('close', (code) => {

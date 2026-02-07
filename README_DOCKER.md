@@ -7,6 +7,10 @@ This guide allows you to run **CASCADE Enterprise RAM** as an isolated, containe
 *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine installed.
 *   `docker-compose` (usually included with Docker Desktop).
 
+## Build Notes
+
+As of v2.1.0, the Docker build no longer requires native compilation tools (python3, make, g++). The switch from `sqlite3` to `better-sqlite3` means prebuilt binaries are used. Faster builds, smaller images, no platform-specific failures.
+
 ## Quick Start
 
 1.  **Build and Run:**
@@ -37,7 +41,7 @@ Your memory database is persisted in the `./data` directory on your host machine
 If running inside a larger Docker network (e.g., alongside an AI Agent container), you can communicate via standard input/output streams if orchestrated together.
 
 ### Future: HTTP/SSE Support
-*Coming in v2.1*: A built-in SSE (Server-Sent Events) adapter will allow you to connect to CASCADE over HTTP (Port 3000), making it accessible to Claude Desktop, LangChain, and remote agents securely.
+*Planned for a future release*: A built-in SSE (Server-Sent Events) adapter will allow you to connect to CASCADE over HTTP (Port 3000), making it accessible to Claude Desktop, LangChain, and remote agents securely.
 
 ---
 **C.I.P.S. Corp** | *Ship AI code with confidence.*
