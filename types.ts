@@ -3,7 +3,7 @@
  *
  * Comprehensive type definitions for the CASCADE 6-Layer Memory System.
  *
- * Version: 2.0.0
+ * Version: 2.2.0
  */
 
 // ============================================================================
@@ -51,8 +51,17 @@ export interface Memory {
   /** Importance score (0-1 scale) */
   importance: number;
 
+  /** Effective importance after temporal decay (0-1 scale, may be null for pre-migration memories) */
+  effective_importance: number | null;
+
   /** Emotional intensity score (0-1 scale) */
   emotional_intensity: number;
+
+  /** Unix timestamp of last access (seconds since epoch) */
+  last_accessed: number | null;
+
+  /** Number of times this memory has been accessed/recalled */
+  access_count: number;
 
   /** Additional metadata as JSON object */
   metadata: MemoryMetadata;
@@ -184,6 +193,9 @@ export interface RecallOptions {
 
   /** Maximum number of results to return (default: 10, max: 1000) */
   limit?: number;
+
+  /** Include memories that have decayed below threshold (default: false) */
+  include_decayed?: boolean;
 }
 
 // ============================================================================
@@ -218,6 +230,12 @@ export interface QueryFilters {
 
   /** Text to search in context field */
   context_contains?: string;
+
+  /** Minimum effective importance after decay (0-1) */
+  effective_importance_min?: number;
+
+  /** Maximum effective importance after decay (0-1) */
+  effective_importance_max?: number;
 
   /** Exact memory ID to match */
   id?: number;
@@ -273,6 +291,9 @@ export interface QueryLayerInput {
 
   /** Query options with structured filters */
   options?: QueryOptions;
+
+  /** Include memories that have decayed below threshold (default: false) */
+  include_decayed?: boolean;
 }
 
 // ============================================================================
@@ -361,6 +382,15 @@ export interface LayerStats {
 
   /** Timestamp of most recent memory */
   most_recent: number;
+
+  /** Number of immortal memories (importance >= immortal threshold) */
+  immortal_count: number;
+
+  /** Number of active (non-immortal, non-decayed) memories */
+  active_count: number;
+
+  /** Number of decayed memories (effective_importance < threshold) */
+  decayed_count: number;
 }
 
 /**
@@ -608,6 +638,7 @@ export type AuditOperationType =
   | 'MEMORY_RECALL'
   | 'MEMORY_QUERY'
   | 'MEMORY_DELETE'
+  | 'MEMORY_DECAY'
   | 'LAYER_ACCESS'
   | 'CONNECTION_OPEN'
   | 'CONNECTION_CLOSE'
@@ -760,6 +791,73 @@ export interface LoggerConfig {
   auditLogPath: string | null;
   auditBufferSize: number;
   auditFlushInterval: number;
+}
+
+// ============================================================================
+// DECAY TYPES
+// ============================================================================
+
+/**
+ * Decay engine configuration.
+ */
+export interface DecayConfig {
+  /** Whether decay is enabled */
+  ENABLED: boolean;
+
+  /** Base decay rate (default: 0.01) */
+  BASE_RATE: number;
+
+  /** Effective importance threshold below which memories are considered decayed (default: 0.1) */
+  THRESHOLD: number;
+
+  /** Importance threshold at or above which memories never decay (default: 0.9) */
+  IMMORTAL_THRESHOLD: number;
+
+  /** Interval between decay sweeps in minutes (default: 60) */
+  SWEEP_INTERVAL_MINUTES: number;
+
+  /** Maximum memories to process per sweep batch (default: 1000) */
+  SWEEP_BATCH_SIZE: number;
+}
+
+/**
+ * Decay engine sweep statistics.
+ */
+export interface DecaySweepStats {
+  /** Timestamp of last sweep (ms since epoch) */
+  lastSweepTime: number | null;
+
+  /** Duration of last sweep in milliseconds */
+  lastSweepDurationMs: number | null;
+
+  /** Total number of sweeps completed */
+  totalSweeps: number;
+
+  /** Total memories updated across all sweeps */
+  totalUpdated: number;
+}
+
+/**
+ * Decay engine status returned by getStatus.
+ */
+export interface DecayEngineStatus {
+  /** Whether decay is enabled */
+  enabled: boolean;
+
+  /** Current configuration */
+  config: {
+    base_rate: number;
+    threshold: number;
+    immortal_threshold: number;
+    sweep_interval_minutes: number;
+    sweep_batch_size: number;
+  };
+
+  /** Sweep statistics */
+  stats: DecaySweepStats;
+
+  /** Whether a sweep is currently in progress */
+  sweep_running: boolean;
 }
 
 // ============================================================================

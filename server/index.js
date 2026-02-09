@@ -55,10 +55,14 @@ import {
   RAM_DB_PATH,
   USE_RAM,
   DEBUG,
+  DECAY_CONFIG,
   MEMORY_LAYERS,
   sanitizeErrorMessage,
   sanitizeDetails
 } from './database.js';
+
+// Import decay engine
+import { DecayEngine } from './decay.js';
 
 // Import tools module
 import {
@@ -98,6 +102,7 @@ const AuditOperation = Object.freeze({
   MEMORY_RECALL: 'MEMORY_RECALL',
   MEMORY_QUERY: 'MEMORY_QUERY',
   MEMORY_DELETE: 'MEMORY_DELETE',
+  MEMORY_DECAY: 'MEMORY_DECAY',
   LAYER_ACCESS: 'LAYER_ACCESS',
   CONNECTION_OPEN: 'CONNECTION_OPEN',
   CONNECTION_CLOSE: 'CONNECTION_CLOSE',
@@ -357,7 +362,7 @@ const AUDIT_LOG_PATH = process.env.CASCADE_AUDIT_LOG || null;
 
 const logger = new StructuredLogger({
   serviceName: 'cascade-memory',
-  version: '2.1.0',
+  version: '2.2.0',
   minLevel: LOG_LEVEL,
   jsonOutput: process.env.LOG_FORMAT !== 'text',
   auditEnabled: true,
@@ -366,6 +371,9 @@ const logger = new StructuredLogger({
 
 // Initialize database manager with dual-write paths
 const dbManager = new CascadeDatabase(READ_PATH, WRITE_PATHS, logger);
+
+// Initialize decay engine
+const decayEngine = new DecayEngine(dbManager, logger);
 
 // Initialize rate limiter
 const rateLimiter = new RateLimiter(logger);
@@ -380,7 +388,7 @@ const rateLimiter = new RateLimiter(logger);
 const server = new Server(
   {
     name: "cascade-memory",
-    version: "2.1.0",
+    version: "2.2.0",
   },
   {
     capabilities: {
@@ -446,7 +454,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.layer || null,
           args.limit || 10,
           logger,
-          AuditOperation
+          AuditOperation,
+          { decayEngine, include_decayed: args.include_decayed === true }
         );
         return createSuccessResponse(memories, name);
       }
@@ -457,13 +466,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.layer,
           args.options || {},
           logger,
-          AuditOperation
+          AuditOperation,
+          { decayEngine, include_decayed: args.include_decayed === true }
         );
         return createSuccessResponse(results, name);
       }
 
       case "get_status": {
-        const status = await getStatus(dbManager, logger);
+        const status = await getStatus(dbManager, logger, decayEngine);
         return createSuccessResponse(status, name);
       }
 
@@ -507,7 +517,7 @@ async function main() {
   const startTime = Date.now();
 
   logger.info('============================================');
-  logger.info('CASCADE Enterprise Memory MCP Server v2.1.0');
+  logger.info('CASCADE Enterprise Memory MCP Server v2.2.0');
   logger.info('============================================');
 
   logger.info('Server configuration loaded', {
@@ -582,6 +592,17 @@ async function main() {
     }
   }
 
+  // Start decay engine after all layers are initialized
+  decayEngine.start();
+
+  logger.info('Decay engine configuration', {
+    enabled: DECAY_CONFIG.ENABLED,
+    baseRate: DECAY_CONFIG.BASE_RATE,
+    threshold: DECAY_CONFIG.THRESHOLD,
+    immortalThreshold: DECAY_CONFIG.IMMORTAL_THRESHOLD,
+    sweepIntervalMinutes: DECAY_CONFIG.SWEEP_INTERVAL_MINUTES
+  });
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
@@ -601,7 +622,7 @@ async function main() {
   });
 
   logger.info('============================================');
-  logger.info('CASCADE Enterprise v2.1.0 ready!', {
+  logger.info('CASCADE Enterprise v2.2.0 ready!', {
     startupDurationMs,
     layersInitialized: initializedLayers.length,
     layersFailed: failedLayers.length,
@@ -611,6 +632,7 @@ async function main() {
   logger.info('Centralized error handling ACTIVE!');
   logger.info('Structured logging ACTIVE!');
   logger.info('Audit trail ENABLED!');
+  logger.info(`Temporal decay ${DECAY_CONFIG.ENABLED ? 'ACTIVE' : 'DISABLED'}!`);
   logger.info('============================================');
 }
 
@@ -626,6 +648,7 @@ process.on('SIGINT', async () => {
     auditStats: logger.getAuditStats()
   });
 
+  decayEngine.stop();
   rateLimiter.stop();
   await logger.shutdown();
   await dbManager.closeAll();
@@ -642,6 +665,7 @@ process.on('SIGTERM', async () => {
     auditStats: logger.getAuditStats()
   });
 
+  decayEngine.stop();
   rateLimiter.stop();
   await logger.shutdown();
   await dbManager.closeAll();
@@ -683,6 +707,10 @@ export {
   ConfigurationError,
   ErrorCodes,
   StatusCodes,
+
+  // Decay
+  DecayEngine,
+  decayEngine,
 
   // Utilities
   sanitizeErrorMessage,

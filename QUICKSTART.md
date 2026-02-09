@@ -107,5 +107,6 @@ The memory persists on disk. The RAM layer gives you sub-millisecond access. Bot
 - **Sub-millisecond RAM access** with automatic disk persistence
 - **Importance scoring** -- high-value memories persist; mark what matters
 - **Cross-layer search** -- one query hits all layers
+- **Temporal decay** -- memories fade unless accessed or marked important (importance >= 0.9 = immortal)
 
 You're running. Build something.

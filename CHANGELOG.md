@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.2.0] - 2026-02-09
+
+### Added
+
+- Temporal memory decay engine. Memories fade over time unless accessed or marked important.
+- `DecayEngine` class with configurable sweep intervals and batch processing
+- Memories with importance >= 0.9 are immortal (never decay)
+- Schema migration adds `last_accessed`, `effective_importance`, `access_count` columns
+- `recall` and `query_layer` filter decayed memories by default. Pass `include_decayed: true` to see all.
+- Accessing a memory resets its decay clock
+- 6 new environment variables for decay configuration (`DECAY_ENABLED`, `DECAY_BASE_RATE`, `DECAY_THRESHOLD`, `DECAY_IMMORTAL_THRESHOLD`, `DECAY_SWEEP_INTERVAL`, `DECAY_SWEEP_BATCH_SIZE`)
+- `get_status` and `get_stats` now include decay information (immortal/active/decayed counts)
+- 30 new decay-specific tests (all passing)
+
+---
+
 ## [2.1.0] - 2026-02-07
 
 ### Changed

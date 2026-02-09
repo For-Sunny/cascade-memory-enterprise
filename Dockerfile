@@ -33,8 +33,8 @@ COPY --from=builder /app/server ./server
 COPY --from=builder /app/ram_disk_manager ./ram_disk_manager
 COPY --from=builder /app/package.json ./
 
-# Create RAM disk directory with correct ownership
-RUN mkdir -p /app/ram_disk && chown -R cascade:cascade /app/ram_disk
+# Create RAM disk directory with correct ownership (matches docker-compose tmpfs mount at /ram_disk)
+RUN mkdir -p /ram_disk && chown -R cascade:cascade /ram_disk
 
 # Set ownership of app directory
 RUN chown -R cascade:cascade /app
@@ -42,8 +42,8 @@ RUN chown -R cascade:cascade /app
 # Environment variables
 ENV NODE_ENV=production
 ENV CASCADE_DB_PATH=/data/cascade
-ENV CASCADE_RAM_PATH=/app/ram_disk
-# Note: In Docker, RAM disk is usually just a folder unless tmpfs is mounted
+ENV CASCADE_RAM_PATH=/ram_disk
+# Note: docker-compose mounts tmpfs at /ram_disk. Without tmpfs, this is a regular directory.
 
 # Expose StdIO (MCP uses StdIO by default, but if you add HTTP later, expose port here)
 # EXPOSE 3000

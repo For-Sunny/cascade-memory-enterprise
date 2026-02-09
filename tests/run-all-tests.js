@@ -18,6 +18,7 @@ const testFiles = [
   'validation.test.js',
   'index.test.js',
   'content_analyzer.test.js',
+  'decay.test.js',
   'integration.test.js'
 ];
 

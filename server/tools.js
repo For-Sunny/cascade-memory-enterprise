@@ -34,6 +34,7 @@ import {
   RAM_DB_PATH,
   DISK_DB_PATH,
   USE_RAM,
+  DECAY_CONFIG,
   determineLayer,
   escapeLikePattern,
   sanitizeOrderBy,
@@ -359,8 +360,8 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
     const emotionalIntensity = validatedMetadata.emotional_intensity !== undefined ? validatedMetadata.emotional_intensity : 0.5;
 
     const insertSQL = `
-      INSERT INTO memories (timestamp, content, event, context, emotional_intensity, importance, metadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO memories (timestamp, content, event, context, emotional_intensity, importance, metadata, last_accessed, effective_importance, access_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const insertParams = [
       timestamp,
@@ -369,7 +370,10 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
       validatedMetadata.context || '',
       emotionalIntensity,
       importance,
-      JSON.stringify(validatedMetadata)
+      JSON.stringify(validatedMetadata),
+      timestamp,
+      importance,
+      0
     ];
 
     await dbManager.dualWrite(targetLayer, insertSQL, insertParams);
@@ -441,9 +445,10 @@ export async function saveMemory(dbManager, content, layer = null, metadata = {}
 /**
  * Recall memories from CASCADE
  */
-export async function recallMemories(dbManager, query, layer = null, limit = 10, logger = null, auditOperation = null) {
+export async function recallMemories(dbManager, query, layer = null, limit = 10, logger = null, auditOperation = null, options = {}) {
   const startTime = Date.now();
   const requestId = logger?._generateRequestId?.() || `req-${Date.now()}`;
+  const { decayEngine = null, include_decayed = false } = options;
 
   try {
     if (query === null || query === undefined || (typeof query === 'string' && query.trim() === '')) {
@@ -463,35 +468,30 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
       requestId,
       queryLength: validatedQuery.length,
       layer: validatedLayer || 'all',
-      limit: validatedLimit
+      limit: validatedLimit,
+      include_decayed
     });
 
     const layers = validatedLayer ? [validatedLayer] : Object.keys(MEMORY_LAYERS);
     const results = [];
 
     // Tokenize query into keywords for better multi-word matching
-    // Split on whitespace, filter empty strings, limit to reasonable number of keywords
     const keywords = validatedQuery
       .split(/\s+/)
       .filter(k => k.length > 0)
-      .slice(0, 20); // Limit keywords to prevent SQL explosion
+      .slice(0, 20);
 
-    // Build WHERE clause: match if ANY keyword is found in event OR context
-    // Each keyword is escaped and parameterized for SQL injection protection
     let whereClause;
     let whereParams;
 
     if (keywords.length === 0) {
-      // Edge case: empty query after trimming - match nothing
       whereClause = '1 = 0';
       whereParams = [];
     } else if (keywords.length === 1) {
-      // Single keyword - original behavior
       const escapedKeyword = escapeLikePattern(keywords[0]);
       whereClause = `(event LIKE ? ESCAPE '\\' OR context LIKE ? ESCAPE '\\')`;
       whereParams = [`%${escapedKeyword}%`, `%${escapedKeyword}%`];
     } else {
-      // Multiple keywords - OR logic: match if ANY keyword found
       const conditions = [];
       whereParams = [];
       for (const keyword of keywords) {
@@ -502,12 +502,18 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
       whereClause = conditions.join(' OR ');
     }
 
+    // Build decay filter clause
+    const decayFilter = (!include_decayed && DECAY_CONFIG.ENABLED)
+      ? `AND (effective_importance IS NULL OR effective_importance >= ${DECAY_CONFIG.THRESHOLD})`
+      : '';
+
     for (const currentLayer of layers) {
       const db = await dbManager.getConnection(currentLayer);
 
       const memories = await db.allAsync(`
         SELECT * FROM memories
-        WHERE ${whereClause}
+        WHERE (${whereClause})
+        ${decayFilter}
         ORDER BY timestamp DESC
         LIMIT ?
       `, [...whereParams, validatedLimit]);
@@ -520,7 +526,10 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
           content: memory.event,
           context: memory.context,
           importance: memory.importance,
+          effective_importance: memory.effective_importance,
           emotional_intensity: memory.emotional_intensity,
+          last_accessed: memory.last_accessed,
+          access_count: memory.access_count || 0,
           metadata: memory.metadata ? JSON.parse(memory.metadata) : {}
         });
       }
@@ -529,6 +538,20 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
     results.sort((a, b) => b.timestamp - a.timestamp);
     const finalResults = results.slice(0, validatedLimit);
     const durationMs = Date.now() - startTime;
+
+    // Fire-and-forget: touch accessed memories to reset decay clock
+    if (decayEngine && finalResults.length > 0) {
+      const byLayer = {};
+      for (const r of finalResults) {
+        if (!byLayer[r.layer]) byLayer[r.layer] = [];
+        byLayer[r.layer].push(r.id);
+      }
+      for (const [touchLayer, ids] of Object.entries(byLayer)) {
+        try {
+          decayEngine.touchMemories(touchLayer, ids);
+        } catch (_) { /* fire-and-forget */ }
+      }
+    }
 
     if (logger && auditOperation) {
       logger.audit(auditOperation.MEMORY_RECALL, {
@@ -587,9 +610,10 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
 /**
  * Query specific layer
  */
-export async function queryLayer(dbManager, layer, options = {}, logger = null, auditOperation = null) {
+export async function queryLayer(dbManager, layer, options = {}, logger = null, auditOperation = null, extraOptions = {}) {
   const startTime = Date.now();
   const requestId = logger?._generateRequestId?.() || `req-${Date.now()}`;
+  const { decayEngine = null, include_decayed = false } = extraOptions;
 
   try {
     const validatedLayer = validateLayer(layer, true);
@@ -599,7 +623,8 @@ export async function queryLayer(dbManager, layer, options = {}, logger = null, 
       requestId,
       layer: validatedLayer,
       hasFilters: !!validatedOptions.filters,
-      limit: validatedOptions.limit
+      limit: validatedOptions.limit,
+      include_decayed
     });
 
     const db = await dbManager.getConnection(validatedLayer);
@@ -608,6 +633,7 @@ export async function queryLayer(dbManager, layer, options = {}, logger = null, 
 
     let query = `SELECT * FROM memories`;
     const params = [];
+    const conditions = [];
 
     if (validatedOptions._deprecated_where_used) {
       logger?.warn('Deprecated WHERE clause usage', {
@@ -618,7 +644,7 @@ export async function queryLayer(dbManager, layer, options = {}, logger = null, 
 
     const { whereClause, params: filterParams } = buildWhereClause(validatedOptions.filters);
     if (whereClause) {
-      query += ` WHERE ${whereClause}`;
+      conditions.push(whereClause);
       params.push(...filterParams);
     }
 
@@ -629,9 +655,19 @@ export async function queryLayer(dbManager, layer, options = {}, logger = null, 
           throw new ValidationError('params[0]', `Search term exceeds maximum length of ${CONTENT_LIMITS.MAX_QUERY_LENGTH}`);
         }
         const escaped = escapeLikePattern(searchTerm);
-        query += ` WHERE (event LIKE ? ESCAPE '\\' OR context LIKE ? ESCAPE '\\')`;
+        conditions.push(`(event LIKE ? ESCAPE '\\' OR context LIKE ? ESCAPE '\\')`);
         params.push(`%${escaped}%`, `%${escaped}%`);
       }
+    }
+
+    // Add decay filter unless include_decayed is true
+    if (!include_decayed && DECAY_CONFIG.ENABLED) {
+      conditions.push(`(effective_importance IS NULL OR effective_importance >= ?)`);
+      params.push(DECAY_CONFIG.THRESHOLD);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
     }
 
     query += ` ORDER BY ${orderBy} LIMIT ?`;
@@ -645,9 +681,20 @@ export async function queryLayer(dbManager, layer, options = {}, logger = null, 
       content: m.event,
       context: m.context,
       importance: m.importance,
+      effective_importance: m.effective_importance,
       emotional_intensity: m.emotional_intensity,
+      last_accessed: m.last_accessed,
+      access_count: m.access_count || 0,
       metadata: m.metadata ? JSON.parse(m.metadata) : {}
     }));
+
+    // Fire-and-forget: touch accessed memories
+    if (decayEngine && results.length > 0) {
+      const ids = results.map(r => r.id);
+      try {
+        decayEngine.touchMemories(validatedLayer, ids);
+      } catch (_) { /* fire-and-forget */ }
+    }
 
     const durationMs = Date.now() - startTime;
 
@@ -708,12 +755,12 @@ export async function queryLayer(dbManager, layer, options = {}, logger = null, 
 /**
  * Get CASCADE status
  */
-export async function getStatus(dbManager, logger = null) {
+export async function getStatus(dbManager, logger = null, decayEngine = null) {
   try {
     const status = {
       cascade_path: CASCADE_DB_PATH,
       system: 'CASCADE Enterprise',
-      version: '2.0.0',
+      version: '2.2.0',
       layers: {},
       total_memories: 0,
       health: 'healthy',
@@ -724,7 +771,8 @@ export async function getStatus(dbManager, logger = null) {
         write_paths: WRITE_PATHS,
         disk_path: DISK_DB_PATH,
         ram_path: RAM_DB_PATH
-      }
+      },
+      decay: decayEngine ? decayEngine.getStatus() : { enabled: false }
     };
 
     const fs = await import('fs');
@@ -780,7 +828,7 @@ export async function getStats(dbManager, logger = null) {
   try {
     const stats = {
       system: 'CASCADE Enterprise',
-      version: '2.0.0',
+      version: '2.2.0',
       dual_write_enabled: WRITE_PATHS.length > 1,
       layers: {}
     };
@@ -793,11 +841,27 @@ export async function getStats(dbManager, logger = null) {
       const avgEmotional = await db.getAsync('SELECT AVG(emotional_intensity) as avg FROM memories');
       const recent = await db.getAsync('SELECT MAX(timestamp) as max FROM memories');
 
+      // Decay statistics
+      const immortalCount = await db.getAsync(
+        `SELECT COUNT(*) as count FROM memories WHERE importance >= ?`,
+        [DECAY_CONFIG.IMMORTAL_THRESHOLD]
+      );
+      const decayedCount = await db.getAsync(
+        `SELECT COUNT(*) as count FROM memories WHERE effective_importance IS NOT NULL AND effective_importance < ?`,
+        [DECAY_CONFIG.THRESHOLD]
+      );
+      const totalCount = count.count || 0;
+      const immortal = immortalCount.count || 0;
+      const decayed = decayedCount.count || 0;
+
       stats.layers[layer] = {
-        count: count.count || 0,
+        count: totalCount,
         avg_importance: avgImportance.avg || 0,
         avg_emotional_intensity: avgEmotional.avg || 0,
-        most_recent: recent.max || 0
+        most_recent: recent.max || 0,
+        immortal_count: immortal,
+        active_count: totalCount - immortal - decayed,
+        decayed_count: decayed
       };
     }
 
@@ -854,7 +918,7 @@ export const TOOLS = [
   },
   {
     name: "recall",
-    description: "Search and retrieve memories from CASCADE layers with content matching",
+    description: "Search and retrieve memories from CASCADE layers with content matching. Decayed memories are hidden by default.",
     inputSchema: {
       type: "object",
       properties: {
@@ -870,6 +934,10 @@ export const TOOLS = [
         limit: {
           type: "number",
           description: "Maximum number of results to return (default: 10)"
+        },
+        include_decayed: {
+          type: "boolean",
+          description: "Include memories that have decayed below threshold (default: false)"
         }
       },
       required: ["query"]
@@ -877,7 +945,7 @@ export const TOOLS = [
   },
   {
     name: "query_layer",
-    description: "Query specific CASCADE memory layer with structured filters (parameterized for security)",
+    description: "Query specific CASCADE memory layer with structured filters (parameterized for security). Decayed memories are hidden by default.",
     inputSchema: {
       type: "object",
       properties: {
@@ -885,6 +953,10 @@ export const TOOLS = [
           type: "string",
           enum: ["episodic", "semantic", "procedural", "meta", "identity", "working"],
           description: "Memory layer to query"
+        },
+        include_decayed: {
+          type: "boolean",
+          description: "Include memories that have decayed below threshold (default: false)"
         },
         options: {
           type: "object",
@@ -902,6 +974,8 @@ export const TOOLS = [
                 timestamp_before: { type: "number", description: "Unix timestamp - memories before this time" },
                 content_contains: { type: "string", description: "Text to search in content/event" },
                 context_contains: { type: "string", description: "Text to search in context" },
+                effective_importance_min: { type: "number", description: "Minimum effective importance after decay (0-1)" },
+                effective_importance_max: { type: "number", description: "Maximum effective importance after decay (0-1)" },
                 id: { type: "number", description: "Exact memory ID" }
               }
             },

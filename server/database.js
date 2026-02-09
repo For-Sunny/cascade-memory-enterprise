@@ -62,6 +62,19 @@ export const CASCADE_DB_PATH = READ_PATH;
 
 export const DEBUG = process.env.DEBUG === 'true';
 
+// ============================================
+// DECAY CONFIGURATION
+// ============================================
+
+export const DECAY_CONFIG = Object.freeze({
+  ENABLED: process.env.DECAY_ENABLED !== 'false',
+  BASE_RATE: parseFloat(process.env.DECAY_BASE_RATE) || 0.01,
+  THRESHOLD: parseFloat(process.env.DECAY_THRESHOLD) || 0.1,
+  IMMORTAL_THRESHOLD: parseFloat(process.env.DECAY_IMMORTAL_THRESHOLD) || 0.9,
+  SWEEP_INTERVAL_MINUTES: parseInt(process.env.DECAY_SWEEP_INTERVAL) || 60,
+  SWEEP_BATCH_SIZE: parseInt(process.env.DECAY_SWEEP_BATCH_SIZE) || 1000
+});
+
 // Memory layer definitions
 export const MEMORY_LAYERS = Object.freeze(
   VALID_LAYERS.reduce((acc, layer) => {
@@ -387,6 +400,35 @@ export class CascadeDatabase {
       `);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_timestamp ON memories(timestamp)`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_importance ON memories(importance)`);
+
+      // Decay columns migration - safe for re-runs (duplicate column check)
+      const decayColumns = [
+        { name: 'last_accessed', type: 'REAL' },
+        { name: 'effective_importance', type: 'REAL' },
+        { name: 'access_count', type: 'INTEGER DEFAULT 0' }
+      ];
+
+      for (const col of decayColumns) {
+        try {
+          db.exec(`ALTER TABLE memories ADD COLUMN ${col.name} ${col.type}`);
+          this.log('info', `Added decay column ${col.name} to ${layer}`);
+        } catch (e) {
+          if (!e.message.includes('duplicate column name')) {
+            throw e;
+          }
+        }
+      }
+
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_effective_importance ON memories(effective_importance)`);
+
+      // Backfill pre-existing rows that lack decay columns
+      db.exec(`
+        UPDATE memories SET
+          last_accessed = timestamp,
+          effective_importance = importance,
+          access_count = 0
+        WHERE last_accessed IS NULL
+      `);
     } catch (error) {
       this.log('error', `Schema error for ${layer}:`, { error: error.message });
       throw new DatabaseError(
@@ -426,6 +468,33 @@ export class CascadeDatabase {
     }
 
     return primaryResult;
+  }
+
+  /**
+   * Execute multiple write operations on all write paths (batch dual-write)
+   * Used by decay engine for bulk updates
+   */
+  dualWriteBatch(layer, operations) {
+    const writeConns = this.initWriteConnections(layer);
+
+    for (let i = 0; i < writeConns.length; i++) {
+      const { path: writePath, db } = writeConns[i];
+      try {
+        for (const { sql, params } of operations) {
+          db.prepare(sql).run(...(Array.isArray(params) ? params : [params]));
+        }
+        this.log('info', `Dual-write batch (${operations.length} ops) to storage ${i === 0 ? 'primary' : 'secondary'} succeeded`);
+      } catch (error) {
+        this.log('error', `Dual-write batch to storage ${i === 0 ? 'primary' : 'secondary'} failed:`, { error: error.message });
+        if (i === 0) {
+          throw new DatabaseError(
+            'Failed to write batch to primary storage',
+            'dual_write_batch',
+            { layer, isPrimary: true }
+          );
+        }
+      }
+    }
   }
 
   /**
@@ -520,7 +589,7 @@ export function escapeLikePattern(str) {
 /**
  * Allowed columns for filtering and ordering (whitelist)
  */
-export const ALLOWED_COLUMNS = ['id', 'timestamp', 'content', 'event', 'context', 'emotional_intensity', 'importance'];
+export const ALLOWED_COLUMNS = ['id', 'timestamp', 'content', 'event', 'context', 'emotional_intensity', 'importance', 'effective_importance', 'last_accessed', 'access_count'];
 export const ALLOWED_ORDER_DIRECTIONS = ['ASC', 'DESC'];
 
 /**
@@ -602,6 +671,16 @@ export function buildWhereClause(filters) {
     params.push(Number(filters.id));
   }
 
+  if (filters.effective_importance_min !== undefined) {
+    conditions.push('effective_importance >= ?');
+    params.push(Number(filters.effective_importance_min));
+  }
+
+  if (filters.effective_importance_max !== undefined) {
+    conditions.push('effective_importance <= ?');
+    params.push(Number(filters.effective_importance_max));
+  }
+
   const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '';
   return { whereClause, params };
 }
@@ -619,6 +698,7 @@ export default {
   WRITE_PATHS,
   CASCADE_DB_PATH,
   DEBUG,
+  DECAY_CONFIG,
   MEMORY_LAYERS,
 
   // Error classes

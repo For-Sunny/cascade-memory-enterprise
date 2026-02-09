@@ -750,7 +750,7 @@ runner.test('Database: getStatus returns correct information', async () => {
     assert(status.layers.episodic, 'Should have episodic layer');
     assert(status.layers.episodic.count >= 1, 'Episodic should have at least 1 memory');
     assert(status.total_memories >= 1, 'Should have at least 1 total memory');
-    assertEqual(status.version, '2.0.0', 'Version should match');
+    assertEqual(status.version, '2.2.0', 'Version should match');
 
     await dbManager2.closeAll();
   } finally {
@@ -792,7 +792,7 @@ runner.test('Database: getStats returns detailed statistics', async () => {
 
     // Test getStats returns the version
     const stats = await getStats(dbManager, logger);
-    assertEqual(stats.version, '2.0.0', 'Version should match');
+    assertEqual(stats.version, '2.2.0', 'Version should match');
   } finally {
     await dbManager.closeAll();
     await cleanupTestDb(testPath);

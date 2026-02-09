@@ -698,7 +698,37 @@ export function validateFilters(filters) {
     validated.id = validateId(filters.id);
   }
 
+  // Effective importance filters (decay)
+  if ('effective_importance_min' in filters) {
+    validated.effective_importance_min = validateNumericRange(
+      filters.effective_importance_min,
+      'filters.effective_importance_min',
+      NUMERIC_LIMITS.MIN_IMPORTANCE,
+      NUMERIC_LIMITS.MAX_IMPORTANCE,
+      null
+    );
+  }
+
+  if ('effective_importance_max' in filters) {
+    validated.effective_importance_max = validateNumericRange(
+      filters.effective_importance_max,
+      'filters.effective_importance_max',
+      NUMERIC_LIMITS.MIN_IMPORTANCE,
+      NUMERIC_LIMITS.MAX_IMPORTANCE,
+      null
+    );
+  }
+
   // Cross-validation: min should not exceed max
+  if (validated.effective_importance_min !== undefined && validated.effective_importance_max !== undefined) {
+    if (validated.effective_importance_min > validated.effective_importance_max) {
+      throw new ValidationError(
+        'filters',
+        'effective_importance_min cannot be greater than effective_importance_max'
+      );
+    }
+  }
+
   if (validated.importance_min !== undefined && validated.importance_max !== undefined) {
     if (validated.importance_min > validated.importance_max) {
       throw new ValidationError(
@@ -815,7 +845,8 @@ export function validateRecallInput(args) {
   return {
     query: validateQuery(args.query),
     layer: validateLayer(args.layer, false),
-    limit: validateLimit(args.limit)
+    limit: validateLimit(args.limit),
+    include_decayed: args.include_decayed === true
   };
 }
 
@@ -829,7 +860,8 @@ export function validateQueryLayerInput(args) {
 
   return {
     layer: validateLayer(args.layer, true),  // Layer is required for query_layer
-    options: validateQueryOptions(args.options)
+    options: validateQueryOptions(args.options),
+    include_decayed: args.include_decayed === true
   };
 }
 

@@ -43,5 +43,21 @@ If running inside a larger Docker network (e.g., alongside an AI Agent container
 ### Future: HTTP/SSE Support
 *Planned for a future release*: A built-in SSE (Server-Sent Events) adapter will allow you to connect to CASCADE over HTTP (Port 3000), making it accessible to Claude Desktop, LangChain, and remote agents securely.
 
+## Decay Configuration
+
+v2.2.0 adds temporal memory decay. Memories fade over time unless accessed or marked important. Configure via environment variables in `docker-compose.yml`:
+
+```yaml
+environment:
+  - DECAY_ENABLED=true              # Enable/disable decay
+  - DECAY_BASE_RATE=0.01            # Decay speed per day
+  - DECAY_THRESHOLD=0.1             # Below this, memories are hidden
+  - DECAY_IMMORTAL_THRESHOLD=0.9    # At or above this, memories never decay
+  - DECAY_SWEEP_INTERVAL=60         # Minutes between sweeps
+  - DECAY_SWEEP_BATCH_SIZE=1000     # Max memories per layer per sweep
+```
+
+All values shown are defaults. Omit any variable to use its default.
+
 ---
 **C.I.P.S. Corp** | *Ship AI code with confidence.*

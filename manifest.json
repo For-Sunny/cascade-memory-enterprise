@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "cascade-enterprise-ram",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "display_name": "CASCADE Enterprise with RAM Disk",
   "description": "6-layer memory architecture with RAM disk acceleration - sub-millisecond reads via dual-write pattern",
   "long_description": "# CASCADE Enterprise with RAM Disk\n\nA complete 6-layer memory architecture with RAM disk acceleration for sub-millisecond performance:\n\n- **Episodic Memory**: Sessions, conversations, temporal experiences\n- **Semantic Memory**: Knowledge, concepts, definitions\n- **Procedural Memory**: Skills, processes, how-to guides\n- **Meta Memory**: Self-awareness, insights, reflections\n- **Identity Memory**: Core values, preferences, defining characteristics\n- **Working Memory**: Active context, current task data\n\n## Performance\n\n| Mode | Read Latency |\n|------|--------------|\n| Disk Only | 2-5ms |\n| RAM + Disk (dual-write) | <1ms |\n\nDual-write architecture: writes go to both RAM and disk simultaneously. Reads come from RAM. If RAM fails, automatic fallback to disk. Zero data loss guarantee.",

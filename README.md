@@ -30,6 +30,7 @@ Important memories persist based on the importance score you assign. Higher impo
 - **Dual-write** - RAM for speed, SQLite for persistence
 - **MCP server** - native integration with Claude and other MCP clients
 - **Six specialized layers** - right memory in the right place
+- **Temporal decay** - memories fade over time unless accessed or marked important. Importance >= 0.9 makes a memory immortal.
 
 ---
 
@@ -176,6 +177,14 @@ CASCADE_RAM_PATH=
 LOG_LEVEL=info
 LOG_FORMAT=json
 DEBUG=false
+
+# Temporal Decay
+DECAY_ENABLED=true              # Enable/disable temporal decay
+DECAY_BASE_RATE=0.01            # Decay speed per day (higher = faster fade)
+DECAY_THRESHOLD=0.1             # Effective importance below this hides memories
+DECAY_IMMORTAL_THRESHOLD=0.9    # Importance at or above this never decays
+DECAY_SWEEP_INTERVAL=60         # Minutes between decay sweeps
+DECAY_SWEEP_BATCH_SIZE=1000     # Max memories processed per layer per sweep
 ```
 
 ---
@@ -227,6 +236,7 @@ Search memories across all layers or a specific layer.
 - `query` (required): Search query
 - `layer` (optional): Limit search to specific layer
 - `limit` (optional): Maximum results. Default: 10
+- `include_decayed` (optional): If true, include memories that have decayed below threshold. Default: false
 
 ### query_layer
 
@@ -248,6 +258,9 @@ Get all memories from a specific layer.
 **Parameters:**
 - `layer` (required): Layer to query
 - `options` (optional): Object with `filters`, `limit`, `order_by`
+- `include_decayed` (optional): If true, include decayed memories. Default: false
+
+Results include `effective_importance` (importance adjusted for decay) on each memory.
 
 ### get_status
 
@@ -260,7 +273,7 @@ Get system status and statistics.
 }
 ```
 
-Returns memory counts per layer, health status, version, and dual-write configuration.
+Returns memory counts per layer, health status, version, dual-write configuration, and decay engine status (enabled, sweep interval, thresholds).
 
 ### get_stats
 
@@ -273,7 +286,7 @@ Get detailed statistics for all memory layers.
 }
 ```
 
-Returns per-layer statistics including memory count, average importance, average emotional intensity, and most recent timestamp.
+Returns per-layer statistics including memory count, average importance, average emotional intensity, most recent timestamp, and decay counts (immortal, active, decayed).
 
 ### save_to_layer
 
