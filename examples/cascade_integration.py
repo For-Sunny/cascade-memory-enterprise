@@ -110,6 +110,11 @@ def main():
         ram_path = temp_path / "ram_cache"
         ram_path.mkdir()
 
+        # NOTE: 'cascade.db' below is a generic demo SQLite database name used to
+        # illustrate RAM Disk Manager behavior. CASCADE's actual memory system stores
+        # data as 6 separate layer files (episodic_memory.db, semantic_memory.db, etc.)
+        # not as a single cascade.db file.
+
         # ---------------------------------------------------------------------
         # Step 1: Create database on disk (the truth)
         # ---------------------------------------------------------------------

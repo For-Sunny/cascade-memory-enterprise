@@ -1,7 +1,7 @@
 /**
  * CASCADE Memory System
  * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
- * Commercial License - See LICENSE file
+ * MIT License - See LICENSE file
  *
  * https://cipscorps.io
  * Contact: glass@cipscorps.io
@@ -46,7 +46,9 @@ export class DecayEngine {
       return importance;
     }
 
-    const daysSinceAccess = (now - lastAccessed) / 86400;
+    // Default to now if lastAccessed is null/undefined (prevents NaN)
+    const safeLastAccessed = lastAccessed || now;
+    const daysSinceAccess = (now - safeLastAccessed) / 86400;
     if (daysSinceAccess <= 0) {
       return importance;
     }

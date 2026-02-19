@@ -1,7 +1,7 @@
 /**
  * CASCADE Memory System
  * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
- * Commercial License - See LICENSE file
+ * MIT License - See LICENSE file
  *
  * https://cipscorps.io
  * Contact: glass@cipscorps.io

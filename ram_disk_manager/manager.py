@@ -23,6 +23,7 @@ from __future__ import annotations
 import atexit
 import logging
 import platform
+import shutil
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -320,7 +321,7 @@ class RamDiskManager:
         if self.config.enable_dual_write:
             try:
                 managed.dual_write_controller = self._create_dual_write_controller(config)
-            except Exception as e:
+            except (ImportError, ValueError, OSError) as e:
                 logger.warning(f"Could not create dual-write controller: {e}")
 
         logger.info(f"Disk '{name}' mounted successfully at {config.ram_path}")
@@ -448,7 +449,7 @@ class RamDiskManager:
 
             logger.info(f"Synced {files_synced} files ({bytes_synced:,} bytes) to RAM for '{name}'")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, shutil.Error) as e:
             result["error"] = str(e)
             logger.error(f"Sync to RAM failed for '{name}': {e}")
 
@@ -501,7 +502,7 @@ class RamDiskManager:
 
             logger.info(f"Synced {files_synced} files ({bytes_synced:,} bytes) to disk for '{name}'")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError, shutil.Error) as e:
             result["error"] = str(e)
             logger.error(f"Sync to disk failed for '{name}': {e}")
 
@@ -723,10 +724,10 @@ class RamDiskManager:
                         marker_path = config.ram_path / self.config.recovery_marker_file
                         try:
                             marker_path.write_text(datetime.now().isoformat())
-                        except Exception:
+                        except (OSError, IOError):
                             pass  # Best effort
 
-                except Exception as e:
+                except (OSError, IOError, RuntimeError) as e:
                     logger.error(f"Error during shutdown for '{name}': {e}")
 
         logger.info("RamDiskManager shutdown complete")

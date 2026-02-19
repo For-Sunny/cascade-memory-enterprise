@@ -3,7 +3,7 @@
 /**
  * CASCADE Memory System
  * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
- * Commercial License - See LICENSE file
+ * MIT License - See LICENSE file
  *
  * https://cipscorps.io
  * Contact: glass@cipscorps.io
@@ -76,7 +76,8 @@ import {
   recallMemories,
   queryLayer,
   getStatus,
-  getStats
+  getStats,
+  getEchoStats
 } from './tools.js';
 
 // ============================================
@@ -120,7 +121,7 @@ class StructuredLogger extends EventEmitter {
   constructor(options = {}) {
     super();
     this.serviceName = options.serviceName || 'cascade-memory';
-    this.version = options.version || '2.1.0';
+    this.version = options.version || '2.2.2';
     this.minLevel = this._parseLevel(options.minLevel || (process.env.LOG_LEVEL || 'info'));
     this.jsonOutput = options.jsonOutput !== false;
     this.colorOutput = options.colorOutput !== false && process.stderr.isTTY;
@@ -362,7 +363,7 @@ const AUDIT_LOG_PATH = process.env.CASCADE_AUDIT_LOG || null;
 
 const logger = new StructuredLogger({
   serviceName: 'cascade-memory',
-  version: '2.2.0',
+  version: '2.2.2',
   minLevel: LOG_LEVEL,
   jsonOutput: process.env.LOG_FORMAT !== 'text',
   auditEnabled: true,
@@ -388,7 +389,7 @@ const rateLimiter = new RateLimiter(logger);
 const server = new Server(
   {
     name: "cascade-memory",
-    version: "2.2.0",
+    version: "2.2.2",
   },
   {
     capabilities: {
@@ -482,6 +483,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return createSuccessResponse(stats, name);
       }
 
+      case "get_echo_stats": {
+        const echoStats = await getEchoStats(dbManager, logger);
+        return createSuccessResponse(echoStats, name);
+      }
+
       case "save_to_layer": {
         const result = await saveMemory(
           dbManager,
@@ -517,7 +523,7 @@ async function main() {
   const startTime = Date.now();
 
   logger.info('============================================');
-  logger.info('CASCADE Enterprise Memory MCP Server v2.2.0');
+  logger.info('CASCADE Enterprise Memory MCP Server v2.2.2');
   logger.info('============================================');
 
   logger.info('Server configuration loaded', {
@@ -622,7 +628,7 @@ async function main() {
   });
 
   logger.info('============================================');
-  logger.info('CASCADE Enterprise v2.2.0 ready!', {
+  logger.info('CASCADE Enterprise v2.2.2 ready!', {
     startupDurationMs,
     layersInitialized: initializedLayers.length,
     layersFailed: failedLayers.length,
@@ -672,6 +678,29 @@ process.on('SIGTERM', async () => {
 
   logger.info('Shutdown complete');
   process.exit(0);
+});
+
+// Global handler for uncaught promise rejections.
+// Without this, unhandled rejections in async operations (e.g., audit buffer
+// flushes, database operations, signal handler cleanup) cause silent failures
+// or crash the process in newer Node.js versions.
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled promise rejection', {
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined
+  });
+});
+
+// Global handler for uncaught exceptions (last resort).
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception - shutting down', {
+    error: error.message,
+    stack: error.stack
+  });
+  // Attempt graceful shutdown
+  decayEngine.stop();
+  rateLimiter.stop();
+  process.exit(1);
 });
 
 // Start the server

@@ -6,6 +6,18 @@ Write order: Disk first (must succeed), RAM second (best effort).
 Read order: RAM first (fast), disk fallback (guaranteed).
 
 Thread-safe implementation with failure callbacks.
+
+IMPORTANT - CONCURRENCY LIMITATION:
+    The threading.RLock used here protects against concurrent access from
+    multiple threads within the SAME process only. It does NOT provide
+    cross-process or filesystem-level locking.
+
+    If multiple processes might write to the same paths simultaneously,
+    callers must implement their own coordination (e.g., fcntl.flock on
+    Linux, msvcrt.locking on Windows, or an external lock manager).
+
+    For single-process usage (the typical MCP server case), the RLock
+    provides sufficient thread safety.
 """
 
 import shutil
@@ -149,7 +161,7 @@ class DualWriteController:
                     if self.on_ram_failure:
                         try:
                             self.on_ram_failure(relative_path, e)
-                        except Exception as cb_error:
+                        except (TypeError, ValueError, OSError, RuntimeError) as cb_error:
                             logger.error(f"on_ram_failure callback error: {cb_error}")
             
             # Success if disk write succeeded (RAM failure is acceptable)
@@ -217,7 +229,7 @@ class DualWriteController:
                     if self.on_ram_failure:
                         try:
                             self.on_ram_failure(relative_path, e)
-                        except Exception as cb_error:
+                        except (TypeError, ValueError, OSError, RuntimeError) as cb_error:
                             logger.error(f"on_ram_failure callback error: {cb_error}")
             
             result.success = result.disk_written
@@ -267,7 +279,7 @@ class DualWriteController:
                     if self.ram_path and self.on_sync_needed:
                         try:
                             self.on_sync_needed(relative_path)
-                        except Exception as cb_error:
+                        except (TypeError, ValueError, OSError, RuntimeError) as cb_error:
                             logger.error(f"on_sync_needed callback error: {cb_error}")
                     
                     if encoding:

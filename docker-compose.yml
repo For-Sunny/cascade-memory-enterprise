@@ -17,9 +17,12 @@ services:
       - NODE_ENV=production
       - CASCADE_DB_PATH=/data/cascade
       - CASCADE_RAM_PATH=/ram_disk
-      # If you implement an API Key later
-      # - CASCADE_LICENSE_KEY=${CASCADE_LICENSE_KEY}
-
+    healthcheck:
+      test: ["CMD", "node", "server/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
     # If you eventually add an HTTP wrapper for remote access:
     # ports:
     #   - "3000:3000"

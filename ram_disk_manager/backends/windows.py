@@ -98,7 +98,7 @@ class WindowsBackend(RamDiskBackend):
         """Check if running with administrator privileges."""
         try:
             return ctypes.windll.shell32.IsUserAnAdmin() != 0
-        except Exception:
+        except (AttributeError, OSError):
             return False
 
     def _get_available_drive_letter(self) -> Optional[str]:
@@ -536,11 +536,17 @@ class WindowsBackend(RamDiskBackend):
   </Actions>
 </Task>'''
 
-            # Write XML to temp file
+            # Write XML to temp file using mkstemp for secure creation
+            # mkstemp creates the file with 0600 permissions (owner-only)
+            # and returns a truly random filename, preventing symlink attacks
             import tempfile
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False, encoding='utf-16') as f:
-                f.write(task_xml)
-                xml_path = f.name
+            fd, xml_path = tempfile.mkstemp(suffix='.xml', prefix='ramdisk_')
+            try:
+                with os.fdopen(fd, 'w', encoding='utf-16') as f:
+                    f.write(task_xml)
+            except Exception:
+                os.close(fd)
+                raise
 
             try:
                 # Create the scheduled task

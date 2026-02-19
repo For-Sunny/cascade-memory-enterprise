@@ -48,7 +48,10 @@ ENV CASCADE_RAM_PATH=/ram_disk
 # Expose StdIO (MCP uses StdIO by default, but if you add HTTP later, expose port here)
 # EXPOSE 3000
 
-# Healthcheck (Optional - hard for StdIO apps)
+# Health check - verifies at least one SQLite database is accessible and responds
+# Runs every 30s, gives 10s for startup, retries 3 times before marking unhealthy
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD ["node", "server/healthcheck.js"]
 
 # Switch to non-root user
 USER cascade

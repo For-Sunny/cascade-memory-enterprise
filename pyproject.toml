@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0,<76.0", "wheel>=0.37.0,<1.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "cascade-ram-disk-manager"
-version = "2.0.0"
+version = "2.2.0"
 description = "Cross-platform RAM disk manager for CASCADE Enterprise"
 readme = "README.md"
-license = {text = "Commercial - See LICENSE"}
+license = {text = "MIT"}
 authors = [
     {name = "CIPS Corp", email = "glass@cipscorps.io"}
 ]
@@ -32,7 +32,7 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
-    "License :: Other/Proprietary License",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
@@ -51,18 +51,18 @@ dependencies = []
 
 [project.optional-dependencies]
 fast = [
-    "xxhash>=3.0.0",
+    "xxhash>=3.0.0,<4.0.0",
 ]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "mypy>=1.0.0",
-    "xxhash>=3.0.0",
+    "pytest>=7.0.0,<9.0.0",
+    "pytest-cov>=4.0.0,<6.0.0",
+    "black>=23.0.0,<25.0.0",
+    "mypy>=1.0.0,<2.0.0",
+    "xxhash>=3.0.0,<4.0.0",
 ]
 test = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
+    "pytest>=7.0.0,<9.0.0",
+    "pytest-cov>=4.0.0,<6.0.0",
 ]
 
 [project.urls]

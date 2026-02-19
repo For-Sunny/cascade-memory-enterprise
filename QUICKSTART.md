@@ -73,10 +73,10 @@ Replace `<install-path>` with your actual install directory.
 node server/index.js
 ```
 
-You should see:
+You should see output beginning with:
 
 ```
-CASCADE Memory MCP Server started
+{"message":"CASCADE Enterprise Memory MCP Server v2.2.2"}
 ```
 
 If you don't, check that `npm install` completed and your paths are correct.

@@ -1,6 +1,6 @@
 {
   "name": "@cipscorp/cascade-enterprise-ram",
-  "version": "2.2.0",
+  "version": "2.2.2",
   "description": "CASCADE Enterprise - 6-Layer Memory Architecture with RAM Disk Acceleration. Sub-millisecond reads via dual-write pattern (RAM speed + disk durability).",
   "type": "module",
   "main": "server/index.js",
@@ -31,7 +31,7 @@
     "performance"
   ],
   "author": "CIPS Corp <glass@cipscorps.io>",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cipscorp/cascade-enterprise-ram.git"
@@ -41,11 +41,11 @@
   },
   "homepage": "https://cipscorps.io",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4",
-    "better-sqlite3": "^11.7.0"
+    "@modelcontextprotocol/sdk": ">=1.0.4 <2.0.0",
+    "better-sqlite3": ">=11.7.0 <12.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0 <25.0.0"
   },
   "files": [
     "server/",

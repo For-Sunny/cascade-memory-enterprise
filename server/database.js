@@ -1,7 +1,7 @@
 /**
  * CASCADE Memory System
  * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
- * Commercial License - See LICENSE file
+ * MIT License - See LICENSE file
  *
  * https://cipscorps.io
  * Contact: glass@cipscorps.io
@@ -126,38 +126,62 @@ export const StatusCodes = Object.freeze({
 });
 
 /**
- * Sensitive patterns to sanitize from error messages
+ * Whitelist of safe error message patterns.
+ * Only messages matching these patterns pass through.
+ * Everything else gets a generic error message.
+ * This is more secure than blacklist: unknown patterns are blocked by default.
  */
-const SENSITIVE_PATTERNS = [
-  /C:\\Users\\[^\\]+/gi,
-  /[A-Z]:\\Users\\[^\\]+/gi,
-  /\/home\/[^\/]+/gi,
-  /\/Users\/[^\/]+/gi,
-  /process\.env\.\w+/gi,
-  /[A-Z]:\\[^\s"']+/gi,
-  /\/[^\s"']*\/[^\s"']*/gi,
-  /\b(?:192\.168|10\.|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3}\b/g,
-  /at\s+[^\s]+\s+\([^)]+\)/gi
+const SAFE_ERROR_PATTERNS = [
+  /^Validation failed/i,
+  /^Content (is required|must be|exceeds)/i,
+  /^Query (is required|must be|cannot be|exceeds)/i,
+  /^Layer (is required|must be)/i,
+  /^Invalid (layer|memory layer|input|content|query|metadata)/i,
+  /^Value must be/i,
+  /^Options must be/i,
+  /^Metadata (must be|exceeds)/i,
+  /^Tags must be/i,
+  /^Too many (tags|related)/i,
+  /^Database operation failed/i,
+  /^Failed to (save|recall|query|get|connect|initialize|write)/i,
+  /^Rate limit exceeded/i,
+  /^Global rate limit/i,
+  /^Tool '\w+' rate limit/i,
+  /^Memory layer \w+ (not found|missing)/i,
+  /^Content exceeds maximum/i,
+  /^Search term exceeds maximum/i,
+  /^(importance|emotional_intensity|effective_importance)_min cannot be greater/i,
+  /^timestamp_after cannot be greater/i,
 ];
 
 /**
- * Sanitize error message to remove sensitive information
+ * Sanitize error message using whitelist approach.
+ * Only known-safe error patterns pass through. Unknown errors get a generic message.
+ * This prevents information disclosure from unexpected error types (DB internals,
+ * file paths, stack traces, environment variables).
  */
 export function sanitizeErrorMessage(message) {
   if (typeof message !== 'string') {
     return 'An error occurred';
   }
 
-  let sanitized = message;
-
-  for (const pattern of SENSITIVE_PATTERNS) {
-    sanitized = sanitized.replace(pattern, '[REDACTED]');
+  const trimmed = message.trim();
+  if (!trimmed) {
+    return 'An error occurred';
   }
 
-  sanitized = sanitized.replace(/(\[REDACTED\]\s*)+/g, '[REDACTED] ');
-  sanitized = sanitized.replace(/\s+/g, ' ').trim();
+  // Check if message matches any safe pattern
+  for (const pattern of SAFE_ERROR_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      // Even for safe patterns, strip anything after a newline (no stack traces)
+      const firstLine = trimmed.split('\n')[0].trim();
+      // Cap length to prevent excessively long messages
+      return firstLine.length > 500 ? firstLine.slice(0, 500) + '...' : firstLine;
+    }
+  }
 
-  return sanitized || 'An error occurred';
+  // Unknown error pattern -- return generic message to prevent info disclosure
+  return 'An error occurred';
 }
 
 /**
@@ -548,7 +572,9 @@ export function determineLayer(content, metadata = {}) {
 
   if (contentLower.includes('session') || contentLower.includes('conversation') ||
       contentLower.includes('today') || contentLower.includes('happened') ||
-      contentLower.includes('event') || contentLower.includes('experience')) {
+      contentLower.includes('event') || contentLower.includes('experience') ||
+      contentLower.includes('victory') || contentLower.includes('achievement') ||
+      contentLower.includes('milestone')) {
     return 'episodic';
   }
 

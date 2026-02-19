@@ -1,7 +1,7 @@
 /**
  * CASCADE Memory System
  * Copyright (c) 2025-2026 CIPS Corp (C.I.P.S. LLC)
- * Commercial License - See LICENSE file
+ * MIT License - See LICENSE file
  *
  * https://cipscorps.io
  * Contact: glass@cipscorps.io
@@ -60,6 +60,7 @@ export const RATE_LIMIT_CONFIG = {
     query_layer: 100,
     get_status: 30,
     get_stats: 30,
+    get_echo_stats: 30,
     save_to_layer: 60
   },
   DEFAULT_TOOL_MAX: 60,
@@ -502,10 +503,13 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
       whereClause = conditions.join(' OR ');
     }
 
-    // Build decay filter clause
+    // Build decay filter clause (parameterized to prevent SQL injection)
     const decayFilter = (!include_decayed && DECAY_CONFIG.ENABLED)
-      ? `AND (effective_importance IS NULL OR effective_importance >= ${DECAY_CONFIG.THRESHOLD})`
+      ? `AND (effective_importance IS NULL OR effective_importance >= ?)`
       : '';
+    const decayFilterParams = (!include_decayed && DECAY_CONFIG.ENABLED)
+      ? [DECAY_CONFIG.THRESHOLD]
+      : [];
 
     for (const currentLayer of layers) {
       const db = await dbManager.getConnection(currentLayer);
@@ -514,9 +518,9 @@ export async function recallMemories(dbManager, query, layer = null, limit = 10,
         SELECT * FROM memories
         WHERE (${whereClause})
         ${decayFilter}
-        ORDER BY timestamp DESC
+        ORDER BY COALESCE(effective_importance, importance) DESC, timestamp DESC
         LIMIT ?
-      `, [...whereParams, validatedLimit]);
+      `, [...whereParams, ...decayFilterParams, validatedLimit]);
 
       for (const memory of memories) {
         results.push({
@@ -760,7 +764,7 @@ export async function getStatus(dbManager, logger = null, decayEngine = null) {
     const status = {
       cascade_path: CASCADE_DB_PATH,
       system: 'CASCADE Enterprise',
-      version: '2.2.0',
+      version: '2.2.2',
       layers: {},
       total_memories: 0,
       health: 'healthy',
@@ -828,7 +832,7 @@ export async function getStats(dbManager, logger = null) {
   try {
     const stats = {
       system: 'CASCADE Enterprise',
-      version: '2.2.0',
+      version: '2.2.2',
       dual_write_enabled: WRITE_PATHS.length > 1,
       layers: {}
     };
@@ -854,8 +858,20 @@ export async function getStats(dbManager, logger = null) {
       const immortal = immortalCount.count || 0;
       const decayed = decayedCount.count || 0;
 
+      // Echo ratio: count derived (CMM-synthesized) vs original memories
+      const derivedCount = await db.getAsync(
+        `SELECT COUNT(*) as count FROM memories WHERE metadata LIKE '%"cmm_derived"%'`
+      );
+      const derived = derivedCount.count || 0;
+      const original = totalCount - derived;
+      const echoRatio = totalCount > 0 ? derived / totalCount : 0;
+
       stats.layers[layer] = {
         count: totalCount,
+        total: totalCount,
+        original,
+        derived,
+        echo_ratio: parseFloat(echoRatio.toFixed(3)),
         avg_importance: avgImportance.avg || 0,
         avg_emotional_intensity: avgEmotional.avg || 0,
         most_recent: recent.max || 0,
@@ -878,6 +894,66 @@ export async function getStats(dbManager, logger = null) {
       'get_stats'
     );
   }
+}
+
+/**
+ * Get echo ratio health metrics for all layers
+ * Read-only, no parameters
+ */
+export async function getEchoStats(dbManager, logger = null) {
+  const stats = await getStats(dbManager, logger);
+
+  const result = {
+    timestamp: Date.now(),
+    layers: {},
+    overall: {
+      total: 0,
+      original: 0,
+      derived: 0,
+      ratio: 0,
+      healthy: true
+    },
+    warnings: []
+  };
+
+  // Per-layer echo ratio
+  for (const [layer, data] of Object.entries(stats.layers)) {
+    const total = data.total || 0;
+    const derived = data.derived || 0;
+    const original = total - derived;
+    const ratio = total > 0 ? derived / total : 0;
+    const percent = ratio * 100;
+    const healthy = ratio <= 0.4;
+
+    result.layers[layer] = {
+      total,
+      original,
+      derived,
+      ratio: parseFloat(ratio.toFixed(3)),
+      percent: parseFloat(percent.toFixed(1)),
+      healthy
+    };
+
+    result.overall.total += total;
+    result.overall.original += original;
+    result.overall.derived += derived;
+
+    if (!healthy) {
+      result.warnings.push(
+        `Layer "${layer}" has ${percent.toFixed(1)}% derived content (threshold: 40%)`
+      );
+    }
+  }
+
+  // Overall ratio
+  if (result.overall.total > 0) {
+    result.overall.ratio = parseFloat(
+      (result.overall.derived / result.overall.total).toFixed(3)
+    );
+    result.overall.healthy = result.overall.ratio <= 0.4;
+  }
+
+  return result;
 }
 
 // ============================================
@@ -1004,6 +1080,15 @@ export const TOOLS = [
     }
   },
   {
+    name: "get_echo_stats",
+    description: "Get CASCADE echo ratio health metrics (read-only monitoring)",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  },
+  {
     name: "save_to_layer",
     description: "Save memory to a specific layer with full control over metadata",
     inputSchema: {
@@ -1048,6 +1133,7 @@ export default {
   queryLayer,
   getStatus,
   getStats,
+  getEchoStats,
 
   // Tool definitions
   TOOLS

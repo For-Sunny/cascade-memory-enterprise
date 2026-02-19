@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+package-lock.json
 
 # Database files
 data/
@@ -15,6 +16,13 @@ dist/
 build/
 *.egg
 .eggs/
+.venv/
+venv/
+
+# Build artifacts
+*.tar
+*.tar.gz
+*.zip
 
 # RAM disk (ephemeral by design)
 ram_data/
@@ -38,3 +46,7 @@ Thumbs.db
 
 # Internal development files
 SECURITY_AUDIT_REPORT.md
+
+# Windows device name artifacts
+nul
+NUL

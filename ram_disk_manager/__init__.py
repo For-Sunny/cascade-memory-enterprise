@@ -45,9 +45,9 @@ See Also:
     - examples/ for usage patterns
 """
 
-__version__ = "2.0.0"
+__version__ = "2.2.0"
 __author__ = "CIPS Corp"
-__license__ = "Commercial"
+__license__ = "MIT"
 
 # Core configuration classes
 from .config import (

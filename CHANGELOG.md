@@ -1,5 +1,41 @@
 # Changelog
 
+## [2.2.2] - 2026-02-18
+
+Documentation and configuration fixes applied during three-path verification.
+
+### Fixed
+
+- **server/tools.js**: `recallMemories` now orders results by `COALESCE(effective_importance, importance) DESC, timestamp DESC` instead of `timestamp DESC` alone — most important memories returned first, not just most recent
+- **server/database.js**: `determineLayer` now classifies content containing 'victory', 'achievement', or 'milestone' as `episodic` (matching `content_analyzer.js` pattern behavior)
+- **tests/index.test.js**: Updated `sanitizeErrorMessage` test group to match current whitelist implementation — tests now verify that file paths and IP addresses are blocked entirely (return `'An error occurred'`) rather than expecting inline `[REDACTED]` substitution from the old redact-then-pass-through design; added tests confirming safe patterns pass through
+- **tests/index.test.js**, **tests/integration.test.js**: Updated hardcoded version assertions from `2.2.0` to `2.2.2`
+- **examples/cascade_integration.py**: Added clarifying comment explaining that `cascade.db` is a generic demo SQLite filename; CASCADE's actual memory system uses 6 separate `{layer}_memory.db` files
+- **server/index.js**, **server/tools.js**, **package.json**: Corrected version strings from `2.2.0` to `2.2.2` (version was not bumped when `2.2.1` changes were applied to CHANGELOG)
+- **README.md**, **QUICKSTART.md**: Updated startup message example to match actual JSON log output
+- **.env.example**: Added all 6 `DECAY_*` environment variables with defaults and descriptions
+- **.gitattributes**: Created with LF enforcement for all text file types (`*.sh`, `*.ts`, `*.js`, `*.json`, `*.md`, `*.yml`, `*.py`); `*.db` marked as binary
+
+---
+
+## [2.2.1] - 2026-02-17
+
+### Added
+
+- Docker health check: `server/healthcheck.js` verifies SQLite database accessibility every 30s. Checks RAM path first, falls back to disk. Health check runs in both Dockerfile and docker-compose.yml with 10s start period and 3 retries.
+- Performance benchmark documentation in README.md with methodology, hardware specs, and reproduction steps.
+
+### Changed
+
+- Dependency upper bounds added to prevent breaking changes from major version bumps:
+  - `@modelcontextprotocol/sdk`: `>=1.0.4 <2.0.0` (was `^1.0.4`)
+  - `better-sqlite3`: `>=11.7.0 <12.0.0` (was `^11.7.0`)
+  - Node.js engine: `>=18.0.0 <25.0.0` (was `>=18.0.0`)
+  - Python build deps: `setuptools>=61.0,<76.0`, `wheel>=0.37.0,<1.0.0`
+  - All Python optional deps now have upper bounds (xxhash, pytest, black, mypy, etc.)
+
+---
+
 ## [2.2.0] - 2026-02-09
 
 ### Added
@@ -34,7 +70,7 @@
 
 ### Release: CASCADE Enterprise + RAM Disk
 
-First commercial release. Persistent 6-layer memory for AI systems with sub-millisecond reads via RAM disk acceleration.
+First release. Persistent 6-layer memory for AI systems with sub-millisecond reads via RAM disk acceleration.
 
 ### Included
 
@@ -46,7 +82,7 @@ First commercial release. Persistent 6-layer memory for AI systems with sub-mill
 - Automatic content-based layer routing
 - Importance scoring for memory prioritization
 - Full MCP tool suite: remember, recall, query_layer, save_to_layer, get_status, get_stats
-- 90-day money-back guarantee
+- MIT open-source license
 
 ### Performance
 

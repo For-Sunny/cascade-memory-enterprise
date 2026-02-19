@@ -203,26 +203,28 @@ testGroup('ConfigurationError Class', () => {
 // ============================================================================
 
 testGroup('sanitizeErrorMessage Function', () => {
-  test('sanitizeErrorMessage handles simple messages', () => {
-    const result = sanitizeErrorMessage('Simple error message');
-    assert.strictEqual(result, 'Simple error message');
+  test('sanitizeErrorMessage passes through safe validation patterns', () => {
+    // Whitelist approach: known-safe patterns pass through, unknown patterns blocked
+    const result = sanitizeErrorMessage('Validation failed: content is required');
+    assert.strictEqual(result, 'Validation failed: content is required');
   });
 
-  test('sanitizeErrorMessage redacts Windows paths', () => {
+  test('sanitizeErrorMessage blocks Windows paths (no info disclosure)', () => {
+    // Whitelist approach: paths don't match safe patterns, blocked entirely
     const result = sanitizeErrorMessage('Error in C:\\Users\\Pirate\\Desktop\\file.js');
-    assert(result.includes('[REDACTED]'));
+    assert.strictEqual(result, 'An error occurred');
     assert(!result.includes('Pirate'));
   });
 
-  test('sanitizeErrorMessage redacts Unix home paths', () => {
+  test('sanitizeErrorMessage blocks Unix home paths (no info disclosure)', () => {
     const result = sanitizeErrorMessage('Error in /home/user/project/file.js');
-    assert(result.includes('[REDACTED]'));
+    assert.strictEqual(result, 'An error occurred');
     assert(!result.includes('/home/user'));
   });
 
-  test('sanitizeErrorMessage redacts internal IP addresses', () => {
+  test('sanitizeErrorMessage blocks internal IP addresses (no info disclosure)', () => {
     const result = sanitizeErrorMessage('Connection to 192.168.1.100 failed');
-    assert(result.includes('[REDACTED]'));
+    assert.strictEqual(result, 'An error occurred');
     assert(!result.includes('192.168.1.100'));
   });
 
@@ -236,9 +238,10 @@ testGroup('sanitizeErrorMessage Function', () => {
     assert.strictEqual(result, 'An error occurred');
   });
 
-  test('sanitizeErrorMessage normalizes whitespace', () => {
-    const result = sanitizeErrorMessage('Error   with   multiple   spaces');
-    assert.strictEqual(result, 'Error with multiple spaces');
+  test('sanitizeErrorMessage passes through safe pattern with whitespace trimmed', () => {
+    // Multi-line messages: only first line returned; leading/trailing whitespace stripped
+    const result = sanitizeErrorMessage('  Invalid layer: foo  ');
+    assert.strictEqual(result, 'Invalid layer: foo');
   });
 });
 
@@ -478,7 +481,7 @@ testGroup('Global Logger Instance', () => {
   });
 
   test('logger has expected version', () => {
-    assert(logger.version === '2.2.0');
+    assert(logger.version === '2.2.2');
   });
 
   test('logger has logging methods', () => {
